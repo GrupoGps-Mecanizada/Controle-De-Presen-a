@@ -472,7 +472,7 @@
                                     <div class="w-10 h-10 rounded-full ${getColorClass(STATUS_CODES[currentStatus].color, 'full')} flex items-center justify-center">
                                         <i class="ph-fill ph-${STATUS_CODES[currentStatus].icon} text-white text-xl"></i>
                                     </div>
-                                    <p class="text-xs font-bold mt-1">${currentStatus}</p>
+                                    <p class="text-[10px] font-bold mt-1 leading-tight">${STATUS_CODES[currentStatus].label}</p>
                                 </div>
                             ` : ''}
                         </div>
@@ -482,14 +482,14 @@
                             ${Object.entries(STATUS_CODES).map(([code, info]) => `
                                 <button 
                                     onclick="setAttendance('${employee.id}', '${code}')"
-                                    class="status-btn p-3 rounded-lg border-2 transition-all ${
+                                    class="status-btn py-3 px-1 rounded-lg border-2 transition-all ${
                                         currentStatus === code 
                                             ? getColorClass(info.color) + ' scale-105 shadow-md active' 
                                             : 'border-gray-200 hover:border-gray-300 bg-white'
                                     }"
                                 >
-                                    <i class="ph-fill ph-${info.icon} text-2xl ${currentStatus === code ? '' : 'text-gray-400'}"></i>
-                                    <p class="text-xs font-bold mt-1 ${currentStatus === code ? '' : 'text-gray-500'}">${code}</p>
+                                    <i class="ph-fill ph-${info.icon} text-xl ${currentStatus === code ? '' : 'text-gray-400'}"></i>
+                                    <p class="text-[10px] font-bold mt-1 leading-tight ${currentStatus === code ? '' : 'text-gray-500'}">${info.label}</p>
                                 </button>
                             `).join('')}
                         </div>
@@ -540,7 +540,6 @@
                                     </div>
                                     <h3 class="text-3xl font-black text-gray-800">${state.statistics[code] || 0}</h3>
                                     <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mt-1">${info.label}</p>
-                                    <p class="text-xs text-gray-400 mt-1">${code}</p>
                                 </div>
                             `).join('')}
                         </div>
