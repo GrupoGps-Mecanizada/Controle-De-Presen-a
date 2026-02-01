@@ -12,10 +12,10 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Inter (Fonte Original mais corporativa) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         * { 
@@ -38,11 +38,6 @@
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
-        }
-        
-        @keyframes slideInLeft {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
         }
         
         @keyframes spin { 
@@ -123,16 +118,21 @@
         .status-btn {
             transition: all 0.2s ease;
             cursor: pointer;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
         }
         
-        .status-btn:hover:not(.active) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        .status-btn:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
         }
         
         .status-btn.active {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-width: 0;
+            font-weight: 700;
         }
         
         /* Loading Overlay */
@@ -155,15 +155,10 @@
         /* Dashboard Cards */
         .stat-card {
             background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
         }
         
         /* Table */
@@ -181,26 +176,31 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 16px 12px;
+            padding: 12px;
             font-size: 0.75rem;
             z-index: 10;
         }
+
+        /* TODAY COLUMN HIGHLIGHT */
+        .data-table th.today-column {
+            background: #dc2626 !important;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 11;
+        }
+
+        .data-table td.today-column {
+            background: #fff5f5;
+            border-left: 1px solid #fee2e2;
+            border-right: 1px solid #fee2e2;
+            font-weight: 600;
+        }
         
         .data-table td {
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #e2e8f0;
         }
         
-        .data-table tbody tr:hover {
-            background: #f8fafc;
-        }
-        
         /* Save Button States */
-        .save-btn {
-            position: relative;
-            overflow: hidden;
-        }
-        
         .save-btn.saving::after {
             content: '';
             position: absolute;
@@ -220,11 +220,11 @@
         .badge {
             display: inline-flex;
             align-items: center;
-            padding: 4px 12px;
-            border-radius: 9999px;
-            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.70rem;
             font-weight: 600;
-            letter-spacing: 0.025em;
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -234,8 +234,8 @@
     
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="bg-white rounded-2xl p-8 text-center">
-            <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <div class="bg-white rounded-xl p-8 text-center shadow-2xl">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p class="text-gray-700 font-semibold">Carregando...</p>
         </div>
     </div>
@@ -245,16 +245,31 @@
 
     <script>
         // ============================================
+        // ÍCONES SVG (CORPORATIVO/ORIGINAL)
+        // ============================================
+        const ICONS = {
+            login: '<svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            dashboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
+            clipboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>',
+            logout: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
+            db: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>',
+            clock: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            search: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>',
+            chart: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>',
+            users: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>'
+        };
+
+        // ============================================
         // CONFIGURAÇÃO
         // ============================================
         const CONFIG = {
             API_URL: 'https://script.google.com/macros/s/AKfycbxhFChepCDa6Mevm76H3DlJTffuPPNcFKScwhcwRnwtxdeBpGK3krhz_CMIGwAkxT5kaA/exec',
-            CACHE_DURATION: 5 * 60 * 1000, // 5 minutos
+            CACHE_DURATION: 5 * 60 * 1000,
             TOAST_DURATION: 4000
         };
         
         // ============================================
-        // STATUS CODES (ATUALIZADOS - SEM ÍCONES)
+        // STATUS CODES
         // ============================================
         const STATUS_CODES = {
             'P': { label: 'Presente', color: '#10b981', bg: '#d1fae5', text: '#065f46' },
@@ -293,145 +308,112 @@
                 period: '30days'
             },
             charts: {},
-            saveState: 'idle' // idle, saving, success, error
+            saveState: 'idle',
+            navigationStack: [],
+            dashboardTab: 'board', 
+            searchQuery: '' 
         };
         
+        // ============================================
+        // NAVEGAÇÃO ANDROID
+        // ============================================
+        function pushNavigation(view, data = {}) {
+            state.navigationStack.push({ 
+                view: state.view, 
+                dashboardTab: state.dashboardTab 
+            });
+            window.history.pushState({ view }, '', '');
+            navigateTo(view);
+        }
+
+        function handleBackButton(event) {
+            if (state.navigationStack.length > 0) {
+                if(event) event.preventDefault();
+                const previous = state.navigationStack.pop();
+                
+                if (previous.view === 'dashboard') {
+                    state.dashboardTab = previous.dashboardTab || 'board';
+                    state.view = 'dashboard';
+                } else {
+                    state.view = previous.view;
+                }
+                render();
+                return true;
+            }
+            return false;
+        }
+
+        window.addEventListener('popstate', (e) => {
+            handleBackButton(e);
+        });
+
         // ============================================
         // CACHE SYSTEM
         // ============================================
         const Cache = {
             set(key, data) {
                 try {
-                    const item = {
-                        data: data,
-                        timestamp: Date.now()
-                    };
+                    const item = { data: data, timestamp: Date.now() };
                     localStorage.setItem(`cache_${key}`, JSON.stringify(item));
-                } catch (e) {
-                    console.warn('Cache set failed:', e);
-                }
+                } catch (e) { console.warn('Cache set failed:', e); }
             },
-            
             get(key) {
                 try {
                     const item = localStorage.getItem(`cache_${key}`);
                     if (!item) return null;
-                    
                     const parsed = JSON.parse(item);
-                    const age = Date.now() - parsed.timestamp;
-                    
-                    if (age > CONFIG.CACHE_DURATION) {
+                    if (Date.now() - parsed.timestamp > CONFIG.CACHE_DURATION) {
                         localStorage.removeItem(`cache_${key}`);
                         return null;
                     }
-                    
                     return parsed.data;
-                } catch (e) {
-                    return null;
-                }
+                } catch (e) { return null; }
             },
-            
             clear(pattern) {
                 try {
-                    if (pattern) {
-                        Object.keys(localStorage)
-                            .filter(key => key.startsWith(`cache_${pattern}`))
-                            .forEach(key => localStorage.removeItem(key));
-                    } else {
-                        Object.keys(localStorage)
-                            .filter(key => key.startsWith('cache_'))
-                            .forEach(key => localStorage.removeItem(key));
-                    }
-                } catch (e) {
-                    console.warn('Cache clear failed:', e);
-                }
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.startsWith(pattern ? `cache_${pattern}` : 'cache_')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                } catch (e) {}
             }
         };
         
         // ============================================
-        // TOAST NOTIFICATION SYSTEM
+        // TOAST SYSTEM
         // ============================================
         const Toast = {
             show(message, type = 'info') {
                 const container = document.getElementById('toastContainer');
                 const toast = document.createElement('div');
                 toast.className = `toast ${type}`;
-                
-                const icons = {
-                    success: '✓',
-                    error: '✕',
-                    info: 'i',
-                    warning: '!'
-                };
-                
-                toast.innerHTML = `
-                    <div class="toast-icon">${icons[type]}</div>
-                    <div class="flex-1">
-                        <p class="text-sm font-semibold text-gray-900">${message}</p>
-                    </div>
-                `;
-                
+                const icons = { success: '✓', error: '✕', info: 'i', warning: '!' };
+                toast.innerHTML = `<div class="toast-icon">${icons[type]}</div><div class="flex-1"><p class="text-sm font-semibold text-gray-900">${message}</p></div>`;
                 container.appendChild(toast);
-                
                 setTimeout(() => {
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(20px)';
                     setTimeout(() => toast.remove(), 300);
                 }, CONFIG.TOAST_DURATION);
             },
-            
-            success(message) { this.show(message, 'success'); },
-            error(message) { this.show(message, 'error'); },
-            info(message) { this.show(message, 'info'); },
-            warning(message) { this.show(message, 'warning'); }
+            success(m) { this.show(m, 'success'); },
+            error(m) { this.show(m, 'error'); },
+            info(m) { this.show(m, 'info'); },
+            warning(m) { this.show(m, 'warning'); }
         };
         
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
-        function getCurrentDate() {
-            return new Date().toISOString().split('T')[0];
-        }
-        
-        function getMonthStart() {
-            const date = new Date();
-            return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
-        }
-        
-        function formatDate(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            return date.toLocaleDateString('pt-BR', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-        }
-        
-        function formatDateShort(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        }
-        
-        function getPreviousDay(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            date.setDate(date.getDate() - 1);
-            return date.toISOString().split('T')[0];
-        }
-        
-        function getNextDay(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            date.setDate(date.getDate() + 1);
-            return date.toISOString().split('T')[0];
-        }
-        
-        function hasGestaoAccess() {
-            return state.user && state.user.accessLevel === ACCESS_LEVELS.GESTAO;
-        }
-        
-        function showLoading(show = true) {
-            document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
-        }
+        function getCurrentDate() { return new Date().toISOString().split('T')[0]; }
+        function getMonthStart() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; }
+        function formatDate(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
+        function formatDateShort(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); }
+        function getPreviousDay(d) { const D = new Date(d+'T00:00:00'); D.setDate(D.getDate()-1); return D.toISOString().split('T')[0]; }
+        function getNextDay(d) { const D = new Date(d+'T00:00:00'); D.setDate(D.getDate()+1); return D.toISOString().split('T')[0]; }
+        function hasGestaoAccess() { return state.user && state.user.accessLevel === ACCESS_LEVELS.GESTAO; }
+        function showLoading(show = true) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
         
         // ============================================
         // API CALLS
@@ -439,75 +421,43 @@
         async function apiCall(endpoint, options = {}) {
             try {
                 const response = await fetch(endpoint, options);
-                const data = await response.json();
-                return data;
+                return await response.json();
             } catch (error) {
-                console.error('API Error:', error);
-                Toast.error('Erro de conexão com o servidor');
+                Toast.error('Erro de conexão');
                 return { success: false, error: error.message };
             }
         }
         
-        async function login(username, password) {
-            const url = `${CONFIG.API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
-            return await apiCall(url);
+        async function login(u, p) { return await apiCall(`${CONFIG.API_URL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`); }
+        
+        async function getEmployees(sup) {
+            const k = `employees_${sup}`;
+            const c = Cache.get(k); if(c) return c;
+            const r = await apiCall(`${CONFIG.API_URL}?action=getEmployees&supervisor=${encodeURIComponent(sup)}`);
+            if(r.success) Cache.set(k, r);
+            return r;
         }
         
-        async function getEmployees(supervisor) {
-            const cacheKey = `employees_${supervisor}`;
-            const cached = Cache.get(cacheKey);
-            if (cached) return cached;
-            
-            const url = `${CONFIG.API_URL}?action=getEmployees&supervisor=${encodeURIComponent(supervisor)}`;
-            const result = await apiCall(url);
-            
-            if (result.success) {
-                Cache.set(cacheKey, result);
-            }
-            
-            return result;
-        }
-        
-        async function getTodayAttendance(supervisor, date) {
-            const cacheKey = `attendance_${supervisor}_${date}`;
-            const cached = Cache.get(cacheKey);
-            if (cached) return cached;
-            
-            const url = `${CONFIG.API_URL}?action=getAttendance&supervisor=${encodeURIComponent(supervisor)}&date=${date}`;
-            const result = await apiCall(url);
-            
-            if (result.success) {
-                Cache.set(cacheKey, result);
-            }
-            
-            return result;
+        async function getTodayAttendance(sup, date) {
+            const k = `attendance_${sup}_${date}`;
+            const c = Cache.get(k); if(c) return c;
+            const r = await apiCall(`${CONFIG.API_URL}?action=getAttendance&supervisor=${encodeURIComponent(sup)}&date=${date}`);
+            if(r.success) Cache.set(k, r);
+            return r;
         }
         
         async function saveMultipleAttendance(records) {
-            const result = await apiCall(CONFIG.API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'saveMultipleAttendance', records: records })
-            });
-            
-            // Limpa cache de presença
-            Cache.clear('attendance_');
-            
-            return result;
+            const r = await apiCall(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveMultipleAttendance', records }) });
+            Cache.clear('attendance_'); Cache.clear('dashboard_');
+            return r;
         }
         
-        async function getDashboardData(startDate, endDate) {
-            const cacheKey = `dashboard_${startDate}_${endDate}`;
-            const cached = Cache.get(cacheKey);
-            if (cached) return cached;
-            
-            const url = `${CONFIG.API_URL}?action=getDashboard&startDate=${startDate}&endDate=${endDate}&supervisor=all`;
-            const result = await apiCall(url);
-            
-            if (result.success) {
-                Cache.set(cacheKey, result);
-            }
-            
-            return result;
+        async function getDashboardData(start, end) {
+            const k = `dashboard_${start}_${end}`;
+            const c = Cache.get(k); if(c) return c;
+            const r = await apiCall(`${CONFIG.API_URL}?action=getDashboard&startDate=${start}&endDate=${end}&supervisor=all`);
+            if(r.success) Cache.set(k, r);
+            return r;
         }
         
         // ============================================
@@ -515,25 +465,19 @@
         // ============================================
         async function handleLogin(e) {
             e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!username || !password) {
-                Toast.warning('Preencha todos os campos');
-                return;
-            }
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            if (!u || !p) { Toast.warning('Preencha todos os campos'); return; }
             
             showLoading(true);
-            
-            const result = await login(username, password);
-            
+            const r = await login(u, p);
             showLoading(false);
             
-            if (result.success) {
-                state.user = result.supervisor;
-                localStorage.setItem('user', JSON.stringify(result.supervisor));
-                
-                Toast.success(`Bem-vindo, ${result.supervisor.nome}!`);
+            if (r.success) {
+                state.user = r.supervisor;
+                localStorage.setItem('user', JSON.stringify(r.supervisor));
+                window.history.pushState({ view: 'login' }, '', '');
+                Toast.success(`Bem-vindo, ${r.supervisor.nome}!`);
                 
                 if (hasGestaoAccess()) {
                     await loadDashboard();
@@ -543,86 +487,63 @@
                     await loadTodayAttendance();
                     state.view = 'attendance';
                 }
-                
                 render();
             } else {
-                Toast.error(result.error || 'Credenciais inválidas');
+                Toast.error(r.error || 'Credenciais inválidas');
             }
         }
         
         async function loadEmployees() {
-            const result = await getEmployees(state.user.nome);
-            if (result.success) {
-                state.employees = result.employees;
-            }
+            const r = await getEmployees(state.user.nome);
+            if (r.success) state.employees = r.employees;
         }
         
         async function loadTodayAttendance() {
-            const result = await getTodayAttendance(state.user.nome, state.selectedDate);
-            if (result.success) {
+            const r = await getTodayAttendance(state.user.nome, state.selectedDate);
+            if (r.success) {
                 state.attendanceRecords = {};
-                result.records.forEach(record => {
-                    state.attendanceRecords[record.employeeId] = record.status;
-                });
+                r.records.forEach(rec => state.attendanceRecords[rec.employeeId] = rec.status);
             }
         }
         
-        function setAttendance(employeeId, status) {
-            // Optimistic UI Update
-            state.attendanceRecords[employeeId] = status;
-            render();
-            Toast.info('Presença marcada');
+        function setAttendance(empId, status) {
+            state.attendanceRecords[empId] = status;
+            render(); // Re-render to show selection color
+            Toast.info('Selecionado: ' + STATUS_CODES[status].label);
         }
         
         async function saveAllAttendance() {
             const records = [];
-            
-            for (const employeeId in state.attendanceRecords) {
-                const employee = state.employees.find(e => e.id === employeeId);
-                if (employee) {
-                    records.push({
-                        date: state.selectedDate,
-                        employeeId: employee.id,
-                        employeeName: employee.nome,
-                        function: employee.funcao,
-                        regime: employee.regime,
-                        supervisor: state.user.nome,
-                        status: state.attendanceRecords[employeeId],
-                        observations: ''
-                    });
-                }
+            for (const id in state.attendanceRecords) {
+                const emp = state.employees.find(e => e.id === id);
+                if (emp) records.push({
+                    date: state.selectedDate,
+                    employeeId: emp.id,
+                    employeeName: emp.nome,
+                    function: emp.funcao,
+                    regime: emp.regime,
+                    supervisor: state.user.nome,
+                    status: state.attendanceRecords[id],
+                    observations: ''
+                });
             }
             
-            if (records.length === 0) {
-                Toast.warning('Nenhuma presença registrada');
-                return;
-            }
+            if (!records.length) { Toast.warning('Nada a salvar'); return; }
             
-            // Optimistic UI
             state.saveState = 'saving';
             render();
             
-            const result = await saveMultipleAttendance(records);
+            const r = await saveMultipleAttendance(records);
             
-            if (result.success) {
+            if (r.success) {
                 state.saveState = 'success';
-                Toast.success(`${records.length} registros salvos com sucesso!`);
-                
-                setTimeout(() => {
-                    state.saveState = 'idle';
-                    render();
-                }, 2000);
+                Toast.success('Salvo com sucesso!');
             } else {
                 state.saveState = 'error';
-                Toast.error('Erro ao salvar: ' + result.error);
-                
-                setTimeout(() => {
-                    state.saveState = 'idle';
-                    render();
-                }, 2000);
+                Toast.error('Erro: ' + r.error);
             }
             
-            render();
+            setTimeout(() => { state.saveState = 'idle'; render(); }, 2000);
         }
         
         function handleLogout() {
@@ -637,21 +558,19 @@
                 isLoading: false,
                 dashboardData: null,
                 sidebarOpen: false,
-                filters: {
-                    startDate: getMonthStart(),
-                    endDate: getCurrentDate(),
-                    period: '30days'
-                },
+                filters: { startDate: getMonthStart(), endDate: getCurrentDate(), period: '30days' },
                 charts: {},
-                saveState: 'idle'
+                saveState: 'idle',
+                navigationStack: [],
+                dashboardTab: 'board',
+                searchQuery: ''
             };
             destroyAllCharts();
-            Toast.info('Você saiu do sistema');
             render();
         }
         
-        async function changeDate(newDate) {
-            state.selectedDate = newDate;
+        async function changeDate(d) {
+            state.selectedDate = d;
             showLoading(true);
             await loadTodayAttendance();
             showLoading(false);
@@ -660,431 +579,311 @@
         
         async function loadDashboard() {
             showLoading(true);
-            
-            const result = await getDashboardData(
-                state.filters.startDate,
-                state.filters.endDate
-            );
-            
-            if (result.success) {
-                state.dashboardData = result.data;
-            }
-            
+            const r = await getDashboardData(state.filters.startDate, state.filters.endDate);
+            if (r.success) state.dashboardData = r.data;
             showLoading(false);
             render();
-            
-            setTimeout(() => {
-                renderCharts();
-            }, 100);
+            if (state.dashboardTab === 'charts') setTimeout(renderCharts, 100);
         }
         
-        function toggleSidebar() {
-            state.sidebarOpen = !state.sidebarOpen;
-            render();
-        }
+        function toggleSidebar() { state.sidebarOpen = !state.sidebarOpen; render(); }
         
         async function navigateTo(view) {
             state.sidebarOpen = window.innerWidth >= 768;
-            
-            if (view === 'dashboard' && hasGestaoAccess()) {
-                await loadDashboard();
-            } else if (view === 'attendance') {
+            if (view === 'dashboard' && hasGestaoAccess()) await loadDashboard();
+            else if (view === 'attendance') {
                 if (!state.employees.length) await loadEmployees();
                 await loadTodayAttendance();
             }
-            
             state.view = view;
             render();
         }
-        
-        async function applyFilters() {
-            await loadDashboard();
+
+        function switchDashboardTab(tab) {
+            state.dashboardTab = tab;
+            render();
+            if (tab === 'charts' || tab === 'team') setTimeout(renderCharts, 100);
+            if (tab === 'board') setTimeout(scrollToToday, 100);
         }
         
-        function updateFilter(key, value) {
-            state.filters[key] = value;
-            
-            // Auto-ajusta período quando usuário seleciona datas manualmente
-            if (key === 'startDate' || key === 'endDate') {
-                state.filters.period = 'custom';
-            }
+        async function applyFilters() { await loadDashboard(); }
+        
+        function updateFilter(k, v) {
+            state.filters[k] = v;
+            if (k === 'startDate' || k === 'endDate') state.filters.period = 'custom';
         }
         
-        function setPeriod(period) {
+        function setPeriod(p) {
             const today = new Date();
-            let startDate;
+            let start;
+            if (p==='7days') start = new Date(today.setDate(today.getDate()-7));
+            else if (p==='30days') start = new Date(today.setDate(today.getDate()-30));
+            else if (p==='thisMonth') start = new Date(today.getFullYear(), today.getMonth(), 1);
             
-            switch(period) {
-                case '7days':
-                    startDate = new Date(today);
-                    startDate.setDate(startDate.getDate() - 7);
-                    break;
-                case '30days':
-                    startDate = new Date(today);
-                    startDate.setDate(startDate.getDate() - 30);
-                    break;
-                case '90days':
-                    startDate = new Date(today);
-                    startDate.setDate(startDate.getDate() - 90);
-                    break;
-                case 'thisMonth':
-                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-                    break;
-                case 'lastMonth':
-                    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    const endDate = new Date(today.getFullYear(), today.getMonth(), 0);
-                    state.filters.endDate = endDate.toISOString().split('T')[0];
-                    break;
-                default:
-                    return;
-            }
-            
-            state.filters.startDate = startDate.toISOString().split('T')[0];
-            if (period !== 'lastMonth') {
-                state.filters.endDate = getCurrentDate();
-            }
-            state.filters.period = period;
-            
+            state.filters.startDate = start.toISOString().split('T')[0];
+            state.filters.endDate = getCurrentDate();
+            state.filters.period = p;
             applyFilters();
+        }
+
+        function scrollToToday() {
+            const el = document.querySelector('.today-column');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
         
         // ============================================
         // CHARTS
         // ============================================
-        function destroyAllCharts() {
-            Object.values(state.charts).forEach(chart => {
-                if (chart) chart.destroy();
-            });
-            state.charts = {};
-        }
+        function destroyAllCharts() { Object.values(state.charts).forEach(c => c && c.destroy()); state.charts = {}; }
         
         function renderCharts() {
             if (!state.dashboardData) return;
-            
             destroyAllCharts();
-            
-            renderTrendChart();
-            renderStatusDistributionChart();
-            renderTopIssuesChart();
-            renderDailyEvolutionChart();
+            if (state.dashboardTab === 'charts') {
+                renderTrendChart();
+                renderStatusDistributionChart();
+                renderTopIssuesChart();
+                renderDailyEvolutionChart();
+            } else if (state.dashboardTab === 'team') {
+                renderTeamEffectivenessChart();
+            }
         }
         
         function renderTrendChart() {
-            const canvas = document.getElementById('trendChart');
-            if (!canvas || !state.dashboardData.dailyStats) return;
-            
-            const ctx = canvas.getContext('2d');
-            const dailyData = state.dashboardData.dailyStats;
-            
+            const ctx = document.getElementById('trendChart')?.getContext('2d');
+            if (!ctx) return;
+            const daily = state.dashboardData.dailyStats;
             state.charts.trend = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: dailyData.map(item => formatDateShort(item.date)),
+                    labels: daily.map(i => formatDateShort(i.date)),
                     datasets: [
-                        {
-                            label: 'Presentes',
-                            data: dailyData.map(item => item.P || 0),
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Faltas',
-                            data: dailyData.map(item => item.F || 0),
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 2
-                        },
-                        {
-                            label: 'Atestados',
-                            data: dailyData.map(item => item.AT || 0),
-                            borderColor: '#f97316',
-                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 2
-                        }
+                        { label: 'Presentes', data: daily.map(i => i.P||0), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 },
+                        { label: 'Faltas', data: daily.map(i => i.F||0), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3 }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { font: { size: 12, weight: '600' }, padding: 15 }
-                        },
-                        title: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
             });
         }
         
         function renderStatusDistributionChart() {
-            const canvas = document.getElementById('statusChart');
-            if (!canvas || !state.dashboardData.statusTotals) return;
-            
-            const ctx = canvas.getContext('2d');
-            const statusData = Object.entries(state.dashboardData.statusTotals)
-                .filter(([_, count]) => count > 0)
-                .sort((a, b) => b[1] - a[1]);
-            
+            const ctx = document.getElementById('statusChart')?.getContext('2d');
+            if (!ctx) return;
+            const stats = Object.entries(state.dashboardData.statusTotals).filter(([,c])=>c>0).sort((a,b)=>b[1]-a[1]);
             state.charts.status = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: statusData.map(([code]) => STATUS_CODES[code]?.label || code),
+                    labels: stats.map(([c]) => STATUS_CODES[c]?.label || c),
                     datasets: [{
-                        data: statusData.map(([_, count]) => count),
-                        backgroundColor: statusData.map(([code]) => STATUS_CODES[code]?.color || '#6b7280'),
+                        data: stats.map(([,c]) => c),
+                        backgroundColor: stats.map(([c]) => STATUS_CODES[c]?.color || '#ccc'),
                         borderWidth: 0
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { font: { size: 11, weight: '600' }, padding: 10 }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
             });
         }
         
         function renderTopIssuesChart() {
-            const canvas = document.getElementById('topIssuesChart');
-            if (!canvas || !state.dashboardData.topFaltas) return;
-            
-            const ctx = canvas.getContext('2d');
-            
+            const ctx = document.getElementById('topIssuesChart')?.getContext('2d');
+            if (!ctx) return;
             state.charts.topIssues = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: state.dashboardData.topFaltas.slice(0, 10).map(item => 
-                        item.name.split(' ').slice(0, 2).join(' ')
-                    ),
-                    datasets: [{
-                        label: 'Faltas',
-                        data: state.dashboardData.topFaltas.slice(0, 10).map(item => item.count),
-                        backgroundColor: '#ef4444',
-                        borderRadius: 6,
-                        barThickness: 30
-                    }]
+                    labels: state.dashboardData.topFaltas.slice(0, 10).map(i => i.name.split(' ').slice(0,2).join(' ')),
+                    datasets: [{ label: 'Faltas', data: state.dashboardData.topFaltas.slice(0, 10).map(i => i.count), backgroundColor: '#ef4444', borderRadius: 4 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
             });
         }
         
         function renderDailyEvolutionChart() {
-            const canvas = document.getElementById('evolutionChart');
-            if (!canvas || !state.dashboardData.dailyStats) return;
-            
-            const ctx = canvas.getContext('2d');
-            const dailyData = state.dashboardData.dailyStats;
-            
-            // Calcula taxa de presença diária
-            const attendanceRate = dailyData.map(item => {
-                const total = Object.values(item).reduce((sum, val) => {
-                    return typeof val === 'number' ? sum + val : sum;
-                }, 0) - (item.date ? 0 : 0);
-                return total > 0 ? Math.round((item.P || 0) / total * 100) : 0;
+            const ctx = document.getElementById('evolutionChart')?.getContext('2d');
+            if (!ctx) return;
+            const rates = state.dashboardData.dailyStats.map(i => {
+                const t = Object.values(i).reduce((s,v)=> (typeof v==='number'&&v!==i.date)?s+v:s, 0);
+                return t>0 ? Math.round((i.P||0)/t*100) : 0;
             });
-            
             state.charts.evolution = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: dailyData.map(item => formatDateShort(item.date)),
-                    datasets: [{
-                        label: 'Taxa de Presença (%)',
-                        data: attendanceRate,
-                        backgroundColor: attendanceRate.map(rate => 
-                            rate >= 95 ? '#10b981' : rate >= 85 ? '#f59e0b' : '#ef4444'
-                        ),
-                        borderRadius: 4
-                    }]
+                    labels: state.dashboardData.dailyStats.map(i => formatDateShort(i.date)),
+                    datasets: [{ label: 'Taxa (%)', data: rates, backgroundColor: rates.map(r => r>=95?'#10b981':r>=85?'#f59e0b':'#ef4444'), borderRadius: 4 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: { 
-                                callback: value => value + '%'
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { max: 100 } } }
+            });
+        }
+
+        function renderTeamEffectivenessChart() {
+            const ctx = document.getElementById('teamEffectivenessChart')?.getContext('2d');
+            if (!ctx) return;
+            const supStats = {};
+            const { employees, records, dates } = state.dashboardData.fullGrid;
+            employees.forEach(e => {
+                if(!supStats[e.supervisor]) supStats[e.supervisor] = {t:0, p:0};
+                dates.forEach(d => {
+                    const s = records[e.id]?.[d];
+                    if(s) { supStats[e.supervisor].t++; if(s==='P') supStats[e.supervisor].p++; }
+                });
+            });
+            const labels = Object.keys(supStats);
+            const data = labels.map(s => supStats[s].t>0 ? Math.round((supStats[s].p/supStats[s].t)*100) : 0);
+            state.charts.team = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Eficiência (%)', data, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { max: 100 } } }
             });
         }
         
+        // ============================================
+        // SEARCH FILTER LOGIC (BUG FIX)
+        // ============================================
+        // Esta função atualiza apenas a lista, sem destruir o input
+        function filterHistoryList(query) {
+            state.searchQuery = query;
+            const grid = document.getElementById('historyResultsGrid');
+            if(grid) {
+                grid.innerHTML = generateHistoryCardsHTML(query);
+            }
+        }
+
+        function generateHistoryCardsHTML(query) {
+            const employees = state.dashboardData.fullGrid.employees;
+            const records = state.dashboardData.fullGrid.records;
+            const dates = state.dashboardData.fullGrid.dates;
+            const q = query.toLowerCase();
+            
+            const filtered = employees.filter(e => e.nome.toLowerCase().includes(q));
+
+            if(filtered.length === 0) return '<p class="text-gray-500 text-center col-span-2 py-8">Nenhum resultado encontrado.</p>';
+
+            return filtered.slice(0, 50).map(emp => {
+                let stats = { P:0, F:0, AT:0 };
+                let history = [];
+                dates.forEach(d => {
+                    const s = records[emp.id]?.[d];
+                    if(s) {
+                        if(stats[s] !== undefined) stats[s]++;
+                        history.push({date: d, status: s});
+                    }
+                });
+                const total = stats.P + stats.F + stats.AT; 
+                const rate = total > 0 ? Math.round((stats.P/total)*100) : 0;
+
+                return `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-gray-900">${emp.nome}</h4>
+                                <p class="text-xs text-gray-500">${emp.supervisor} | ${emp.funcao}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xl font-bold ${stats.F > 2 ? 'text-red-500' : 'text-green-500'}">
+                                    ${rate}%
+                                </span>
+                                <p class="text-[10px] text-gray-400">Presença</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                            ${history.reverse().slice(0, 10).map(h => `
+                                <div class="flex flex-col items-center min-w-[30px]">
+                                    <span class="text-[10px] text-gray-400">${formatDateShort(h.date)}</span>
+                                    <span class="text-xs font-bold" style="color:${STATUS_CODES[h.status]?.color}">${h.status}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         // ============================================
         // RENDER FUNCTIONS
         // ============================================
         function render() {
             const app = document.getElementById('app');
-            
             switch(state.view) {
-                case 'login':
-                    app.innerHTML = renderLogin();
-                    break;
-                case 'attendance':
-                    app.innerHTML = renderAttendance();
-                    break;
-                case 'dashboard':
-                    app.innerHTML = renderDashboard();
-                    break;
+                case 'login': app.innerHTML = renderLogin(); break;
+                case 'attendance': app.innerHTML = renderAttendance(); break;
+                case 'dashboard': app.innerHTML = renderDashboard(); break;
             }
         }
         
         function renderLogin() {
             return `
-                <div class="min-h-screen flex items-center justify-center p-6" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);">
-                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden fade-in">
-                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center">
+                <div class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-600 to-blue-800">
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden fade-in">
+                        <div class="bg-blue-600 p-8 text-center">
                             <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+                                ${ICONS.login}
                             </div>
-                            <h1 class="text-3xl font-black text-white mb-2">Sistema de Presença</h1>
+                            <h1 class="text-3xl font-bold text-white mb-2">Sistema de Presença</h1>
                             <p class="text-blue-100 text-sm font-medium">GPS Mecanizada - Gestão Profissional</p>
                         </div>
-                        
                         <form onsubmit="handleLogin(event)" class="p-8 space-y-6">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Usuário</label>
-                                <input 
-                                    type="text" 
-                                    id="username"
-                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-600 outline-none transition-all"
-                                    placeholder="Digite seu nome de usuário"
-                                    required
-                                >
+                                <input type="text" id="username" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" required>
                             </div>
-                            
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
-                                <input 
-                                    type="password" 
-                                    id="password"
-                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-600 outline-none transition-all"
-                                    placeholder="Digite sua senha"
-                                    required
-                                >
+                                <input type="password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" required>
                             </div>
-                            
-                            <button 
-                                type="submit" 
-                                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
-                            >
-                                Entrar no Sistema
-                            </button>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition-all">Entrar</button>
                         </form>
-                        
-                        <div class="px-8 pb-8 text-center text-xs text-gray-400">
-                            <p class="font-medium">Sistema v3.0 Professional | © 2026</p>
-                        </div>
+                        <div class="px-8 pb-8 text-center text-xs text-gray-400"><p>© 2026 GPS Mecanizada</p></div>
                     </div>
                 </div>
             `;
         }
         
         function renderSidebar() {
-            const menuItems = hasGestaoAccess() ? [
-                { label: 'Dashboard', view: 'dashboard', icon: 'chart' },
-                { label: 'Marcação de Presença', view: 'attendance', icon: 'clipboard' }
+            const isGestao = hasGestaoAccess();
+            const extraLinks = isGestao ? [
+                { label: 'Banco de Dados', url: 'https://docs.google.com/spreadsheets/d/1XMMLkcLQrDhD96aYOiWNTHkaOz2Qn7f99ADCv9e5WMY/edit', icon: ICONS.db }
             ] : [
-                { label: 'Marcação de Presença', view: 'attendance', icon: 'clipboard' }
+                { label: 'Classificar Horas', url: 'https://grupogps-mecanizada.github.io/CLASSIFICAR-HORAS/', icon: ICONS.clock }
+            ];
+
+            const menuItems = isGestao ? [
+                { label: 'Dashboard', view: 'dashboard', icon: ICONS.dashboard },
+                { label: 'Marcação de Presença', view: 'attendance', icon: ICONS.clipboard }
+            ] : [
+                { label: 'Marcação de Presença', view: 'attendance', icon: ICONS.clipboard }
             ];
             
-            const icons = {
-                chart: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
-                clipboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>'
-            };
-            
             return `
-                <!-- Overlay -->
                 ${state.sidebarOpen && window.innerWidth < 768 ? '<div class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onclick="toggleSidebar()"></div>' : ''}
-                
-                <!-- Sidebar -->
                 <aside class="sidebar ${state.sidebarOpen ? '' : 'closed'}">
-                    <!-- Header -->
-                    <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6">
+                    <div class="bg-blue-800 text-white p-6">
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-bold text-xl">
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
                                     ${state.user.nome.charAt(0)}
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-bold text-sm truncate">${state.user.nome}</h3>
-                                    <p class="text-xs opacity-90">${hasGestaoAccess() ? 'Gestão' : 'Supervisor'}</p>
+                                    <p class="text-xs opacity-70">${isGestao ? 'Gestão' : 'Supervisor'}</p>
                                 </div>
                             </div>
-                            <button onclick="toggleSidebar()" class="p-2 hover:bg-white/20 rounded-lg md:hidden">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
+                            <button onclick="toggleSidebar()" class="p-2 hover:bg-white/20 rounded-lg md:hidden">✕</button>
                         </div>
                     </div>
-                    
-                    <!-- Menu -->
-                    <nav class="p-4 flex-1 overflow-y-auto">
+                    <nav class="p-4 flex-1 overflow-y-auto space-y-1">
                         ${menuItems.map(item => `
-                            <button 
-                                onclick="navigateTo('${item.view}')"
-                                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all font-medium ${
-                                    state.view === item.view 
-                                        ? 'bg-blue-50 text-blue-700' 
-                                        : 'text-gray-600 hover:bg-gray-50'
-                                }"
-                            >
-                                ${icons[item.icon]}
-                                <span>${item.label}</span>
+                            <button onclick="pushNavigation('${item.view}')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${state.view === item.view ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}">
+                                ${item.icon}<span>${item.label}</span>
                             </button>
                         `).join('')}
-                        
                         <div class="border-t border-gray-200 my-4"></div>
-                        
-                        <button 
-                            onclick="handleLogout()"
-                            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-red-600 hover:bg-red-50"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                            </svg>
-                            <span>Sair</span>
+                        ${extraLinks.map(link => `
+                            <a href="${link.url}" target="_blank" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-gray-600 hover:bg-gray-50">
+                                ${link.icon}<span>${link.label}</span>
+                            </a>
+                        `).join('')}
+                        <div class="border-t border-gray-200 my-4"></div>
+                        <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-red-600 hover:bg-red-50">
+                            ${ICONS.logout}<span>Sair</span>
                         </button>
                     </nav>
                 </aside>
@@ -1092,102 +891,51 @@
         }
         
         function renderAttendance() {
-            const totalMarked = Object.keys(state.attendanceRecords).length;
-            const totalEmployees = state.employees.length;
-            const progress = totalEmployees > 0 ? Math.round((totalMarked / totalEmployees) * 100) : 0;
-            
-            const saveButtonStates = {
-                idle: { text: `Salvar ${totalMarked} Registros`, disabled: totalMarked === 0, class: 'bg-green-600 hover:bg-green-700' },
+            const total = state.employees.length;
+            const marked = Object.keys(state.attendanceRecords).length;
+            const progress = total > 0 ? Math.round((marked / total) * 100) : 0;
+            const btn = {
+                idle: { text: `Salvar ${marked} Registros`, disabled: marked === 0, class: 'bg-green-600 hover:bg-green-700' },
                 saving: { text: 'Salvando...', disabled: true, class: 'bg-green-600 save-btn saving' },
-                success: { text: '✓ Salvo com Sucesso!', disabled: true, class: 'bg-green-500' },
-                error: { text: '✕ Erro ao Salvar', disabled: true, class: 'bg-red-500' }
-            };
-            
-            const btnState = saveButtonStates[state.saveState];
+                success: { text: '✓ Salvo', disabled: true, class: 'bg-green-500' },
+                error: { text: '✕ Erro', disabled: true, class: 'bg-red-500' }
+            }[state.saveState];
             
             return `
                 ${renderSidebar()}
-                
-                <div class="main-content min-h-screen bg-gray-50">
-                    <!-- Header -->
-                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+                <div class="main-content min-h-screen bg-gray-50 pb-24">
+                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
                         <div class="px-4 py-4">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-3">
-                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">
-                                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                                        </svg>
-                                    </button>
+                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">☰</button>
                                     <div>
-                                        <h1 class="text-xl font-bold text-gray-900">Marcação de Presença</h1>
+                                        <h1 class="text-lg font-bold text-gray-900">Marcação de Presença</h1>
                                         <p class="text-sm text-gray-500">${state.user.nome}</p>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- Date Selector -->
-                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                <div class="flex items-center justify-between gap-2">
-                                    <button onclick="changeDate('${getPreviousDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded-lg transition-all">
-                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                                        </svg>
-                                    </button>
-                                    <div class="flex-1 text-center">
-                                        <input 
-                                            type="date" 
-                                            value="${state.selectedDate}"
-                                            onchange="changeDate(this.value)"
-                                            class="bg-transparent text-center font-semibold outline-none cursor-pointer text-gray-900"
-                                        >
-                                        <p class="text-xs text-gray-500 mt-1">${formatDate(state.selectedDate)}</p>
-                                    </div>
-                                    <button onclick="changeDate('${getNextDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded-lg transition-all">
-                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                        </svg>
-                                    </button>
+                            <div class="bg-gray-50 rounded-lg p-2 border border-gray-200 flex items-center justify-between">
+                                <button onclick="changeDate('${getPreviousDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded shadow-sm">◀</button>
+                                <div class="text-center">
+                                    <input type="date" value="${state.selectedDate}" onchange="changeDate(this.value)" class="bg-transparent text-center font-bold outline-none text-gray-900">
+                                    <p class="text-xs text-gray-500">${formatDate(state.selectedDate)}</p>
                                 </div>
+                                <button onclick="changeDate('${getNextDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded shadow-sm">▶</button>
                             </div>
-                            
-                            <!-- Progress -->
                             <div class="mt-4">
-                                <div class="flex justify-between text-xs font-semibold text-gray-600 mb-2">
-                                    <span>Progresso</span>
-                                    <span>${totalMarked}/${totalEmployees} (${progress}%)</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
-                                </div>
+                                <div class="flex justify-between text-xs font-semibold text-gray-600 mb-1"><span>Progresso</span><span>${progress}%</span></div>
+                                <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div></div>
                             </div>
                         </div>
                     </header>
-
-                    <!-- Employees List -->
-                    <main class="p-4 pb-24 max-w-6xl mx-auto">
-                        ${state.employees.length === 0 ? `
-                            <div class="text-center py-16 bg-white rounded-2xl">
-                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                                <p class="text-gray-500 font-medium">Nenhum colaborador encontrado</p>
-                            </div>
-                        ` : `
-                            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                ${state.employees.map(emp => renderEmployeeCard(emp)).join('')}
-                            </div>
-                        `}
+                    <main class="p-4 max-w-6xl mx-auto">
+                        ${state.employees.length === 0 ? '<div class="text-center py-10 text-gray-500">Nenhum colaborador</div>' : 
+                          `<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">${state.employees.map(emp => renderEmployeeCard(emp)).join('')}</div>`}
                     </main>
-
-                    <!-- Fixed Bottom Bar -->
-                    <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 z-30 md:left-[280px]">
-                        <button 
-                            onclick="saveAllAttendance()"
-                            ${btnState.disabled ? 'disabled' : ''}
-                            class="w-full max-w-6xl mx-auto block ${btnState.class} text-white font-bold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            ${btnState.text}
+                    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 md:left-[280px]">
+                        <button onclick="saveAllAttendance()" ${btn.disabled ? 'disabled' : ''} class="w-full max-w-4xl mx-auto block ${btn.class} text-white font-bold py-3 rounded-lg shadow transition-all">
+                            ${btn.text}
                         </button>
                     </div>
                 </div>
@@ -1198,350 +946,201 @@
             const currentStatus = state.attendanceRecords[employee.id];
             
             return `
-                <div class="bg-white rounded-xl shadow-sm border-2 ${currentStatus ? 'border-green-500' : 'border-gray-200'} p-4 fade-in transition-all hover:shadow-md">
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex-1">
-                            <h3 class="font-bold text-gray-900 mb-2">${employee.nome}</h3>
-                            <div class="flex gap-2 flex-wrap">
-                                <span class="badge bg-blue-100 text-blue-700">${employee.funcao}</span>
-                                <span class="badge bg-purple-100 text-purple-700">${employee.regime}</span>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between mb-3 items-start">
+                        <div>
+                            <h3 class="font-bold text-gray-900">${employee.nome}</h3>
+                            <div class="flex gap-2 mt-1">
+                                <span class="badge bg-blue-100 text-blue-800">${employee.funcao}</span>
                             </div>
                         </div>
-                        ${currentStatus ? `
-                            <div class="ml-2">
-                                <div class="px-3 py-1 rounded-lg text-xs font-bold" style="background: ${STATUS_CODES[currentStatus].bg}; color: ${STATUS_CODES[currentStatus].text}">
-                                    ${STATUS_CODES[currentStatus].label}
-                                </div>
-                            </div>
-                        ` : ''}
+                        ${currentStatus ? `<span class="badge" style="background:${STATUS_CODES[currentStatus].bg};color:${STATUS_CODES[currentStatus].text}">${STATUS_CODES[currentStatus].label}</span>` : ''}
                     </div>
                     
-                    <!-- Status Grid -->
                     <div class="grid grid-cols-3 gap-2">
-                        ${Object.entries(STATUS_CODES).map(([code, info]) => `
+                        ${Object.entries(STATUS_CODES).slice(0, 9).map(([code, info]) => {
+                            const isSelected = currentStatus === code;
+                            // Se selecionado, aplica cor. Se não, branco/cinza padrão.
+                            const style = isSelected 
+                                ? `background:${info.bg}; color:${info.text}; border-color:${info.color}` 
+                                : ``; 
+                            
+                            return `
                             <button 
-                                onclick="setAttendance('${employee.id}', '${code}')"
-                                class="status-btn p-2 rounded-lg text-xs font-semibold transition-all ${
-                                    currentStatus === code 
-                                        ? 'active' 
-                                        : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
-                                }"
-                                style="${currentStatus === code ? `background: ${info.bg}; color: ${info.text}; border: 2px solid ${info.color}` : 'border: 2px solid transparent'}"
-                            >
+                                onclick="setAttendance('${employee.id}', '${code}')" 
+                                class="status-btn p-2 rounded text-xs font-medium ${isSelected ? 'active' : ''}" 
+                                style="${style}">
                                 ${info.label}
                             </button>
-                        `).join('')}
+                        `}).join('')}
                     </div>
                 </div>
             `;
         }
         
         function renderDashboard() {
-            if (!hasGestaoAccess()) {
-                return `
-                    <div class="min-h-screen flex items-center justify-center p-6">
-                        <div class="text-center">
-                            <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                            <h2 class="text-2xl font-bold text-gray-700 mb-2">Acesso Restrito</h2>
-                            <p class="text-gray-500">Você não tem permissão para acessar o dashboard.</p>
-                        </div>
-                    </div>
-                `;
-            }
-            
+            if (!hasGestaoAccess()) return '<div class="p-8 text-center">Acesso Negado</div>';
             return `
                 ${renderSidebar()}
-                
                 <div class="main-content min-h-screen bg-gray-50">
-                    <!-- Header -->
                     <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
                         <div class="px-4 py-4">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">
-                                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                                        </svg>
-                                    </button>
-                                    <div>
-                                        <h1 class="text-xl font-bold text-gray-900">Dashboard Executivo</h1>
-                                        <p class="text-sm text-gray-500">Análise Completa de Presença</p>
-                                    </div>
-                                </div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <button onclick="toggleSidebar()" class="p-2 md:hidden">☰</button>
+                                <div><h1 class="text-xl font-bold text-gray-900">Dashboard</h1><p class="text-xs text-gray-500">Gestão Profissional</p></div>
                             </div>
-                            
-                            <!-- Filters -->
-                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                                <!-- Quick Period Selector -->
-                                <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
-                                    ${['7days', '30days', '90days', 'thisMonth', 'lastMonth'].map(period => {
-                                        const labels = {
-                                            '7days': '7 Dias',
-                                            '30days': '30 Dias',
-                                            '90days': '90 Dias',
-                                            'thisMonth': 'Este Mês',
-                                            'lastMonth': 'Mês Passado'
-                                        };
-                                        return `
-                                            <button 
-                                                onclick="setPeriod('${period}')"
-                                                class="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
-                                                    state.filters.period === period 
-                                                        ? 'bg-blue-600 text-white' 
-                                                        : 'bg-white text-gray-600 hover:bg-gray-100'
-                                                }"
-                                            >
-                                                ${labels[period]}
-                                            </button>
-                                        `;
-                                    }).join('')}
+                            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                ${[
+                                    { id: 'board', label: 'Quadro Geral', icon: ICONS.clipboard },
+                                    { id: 'charts', label: 'Gráficos', icon: ICONS.chart },
+                                    { id: 'team', label: 'Efetivo', icon: ICONS.users },
+                                    { id: 'history', label: 'Histórico', icon: ICONS.search }
+                                ].map(tab => `
+                                    <button onclick="switchDashboardTab('${tab.id}')" class="px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 border transition-all ${state.dashboardTab === tab.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}">
+                                        ${tab.icon} ${tab.label}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="px-4 pb-4 border-t border-gray-100 pt-2 bg-gray-50">
+                            <div class="flex flex-wrap gap-2 items-center justify-between">
+                                <div class="flex gap-1">
+                                    <button onclick="setPeriod('7days')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">7D</button>
+                                    <button onclick="setPeriod('30days')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">30D</button>
+                                    <button onclick="setPeriod('thisMonth')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">Mês</button>
                                 </div>
-                                
-                                <!-- Custom Date Range -->
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Data Inicial</label>
-                                        <input 
-                                            type="date" 
-                                            value="${state.filters.startDate}"
-                                            onchange="updateFilter('startDate', this.value)"
-                                            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Data Final</label>
-                                        <input 
-                                            type="date" 
-                                            value="${state.filters.endDate}"
-                                            onchange="updateFilter('endDate', this.value)"
-                                            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                    </div>
-                                    <div class="flex items-end">
-                                        <button 
-                                            onclick="applyFilters()"
-                                            class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all"
-                                        >
-                                            Aplicar Filtros
-                                        </button>
-                                    </div>
+                                <div class="flex gap-2 items-center">
+                                    <input type="date" value="${state.filters.startDate}" onchange="updateFilter('startDate', this.value)" class="text-xs p-1 border rounded bg-white">
+                                    <span class="text-gray-400">→</span>
+                                    <input type="date" value="${state.filters.endDate}" onchange="updateFilter('endDate', this.value)" class="text-xs p-1 border rounded bg-white">
+                                    <button onclick="applyFilters()" class="p-1 bg-blue-600 text-white rounded text-xs px-2">OK</button>
                                 </div>
                             </div>
                         </div>
                     </header>
-
                     <main class="p-4 max-w-7xl mx-auto">
-                        ${!state.dashboardData ? `
-                            <div class="text-center py-16">
-                                <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                <p class="text-gray-600 font-medium">Carregando dados...</p>
-                            </div>
-                        ` : renderDashboardContent()}
+                        ${!state.dashboardData ? `<div class="text-center py-20"><div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div><p class="mt-4 text-gray-500">Carregando...</p></div>` : renderDashboardContent()}
                     </main>
                 </div>
             `;
         }
-        
-        function renderDashboardContent() {
-            const data = state.dashboardData;
-            
-            // Cálculos inteligentes
-            const total = Object.values(data.statusTotals).reduce((a, b) => a + b, 0);
-            const presencaRate = total > 0 ? Math.round((data.statusTotals.P / total) * 100) : 0;
-            const faltaRate = total > 0 ? Math.round((data.statusTotals.F / total) * 100) : 0;
-            const atestadoRate = total > 0 ? Math.round((data.statusTotals.AT / total) * 100) : 0;
-            
-            // Alertas inteligentes
-            const alerts = [];
-            if (faltaRate > 10) alerts.push({ type: 'error', message: `Taxa de faltas elevada: ${faltaRate}%` });
-            if (atestadoRate > 15) alerts.push({ type: 'warning', message: `Taxa de atestados acima do esperado: ${atestadoRate}%` });
-            if (presencaRate < 85) alerts.push({ type: 'warning', message: `Taxa de presença abaixo da meta: ${presencaRate}%` });
-            if (presencaRate >= 95) alerts.push({ type: 'success', message: `Excelente taxa de presença: ${presencaRate}%` });
-            
-            return `
-                <!-- KPIs Principais -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 fade-in">
-                    <div class="stat-card border-l-4 border-green-500">
-                        <div class="text-sm font-semibold text-gray-500 mb-1">Taxa de Presença</div>
-                        <div class="text-3xl font-black text-gray-900 mb-2">${presencaRate}%</div>
-                        <div class="text-xs text-gray-600">${data.statusTotals.P || 0} de ${total} registros</div>
-                    </div>
-                    
-                    <div class="stat-card border-l-4 border-red-500">
-                        <div class="text-sm font-semibold text-gray-500 mb-1">Taxa de Faltas</div>
-                        <div class="text-3xl font-black text-gray-900 mb-2">${faltaRate}%</div>
-                        <div class="text-xs text-gray-600">${data.statusTotals.F || 0} faltas registradas</div>
-                    </div>
-                    
-                    <div class="stat-card border-l-4 border-orange-500">
-                        <div class="text-sm font-semibold text-gray-500 mb-1">Atestados</div>
-                        <div class="text-3xl font-black text-gray-900 mb-2">${data.statusTotals.AT || 0}</div>
-                        <div class="text-xs text-gray-600">${atestadoRate}% do total</div>
-                    </div>
-                    
-                    <div class="stat-card border-l-4 border-blue-500">
-                        <div class="text-sm font-semibold text-gray-500 mb-1">Total de Registros</div>
-                        <div class="text-3xl font-black text-gray-900 mb-2">${total}</div>
-                        <div class="text-xs text-gray-600">No período selecionado</div>
-                    </div>
-                </div>
-                
-                <!-- Alertas Inteligentes -->
-                ${alerts.length > 0 ? `
-                    <div class="mb-6 space-y-2 fade-in">
-                        ${alerts.map(alert => `
-                            <div class="bg-white rounded-xl p-4 border-l-4 ${
-                                alert.type === 'error' ? 'border-red-500' :
-                                alert.type === 'warning' ? 'border-yellow-500' :
-                                'border-green-500'
-                            }">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center ${
-                                        alert.type === 'error' ? 'bg-red-100' :
-                                        alert.type === 'warning' ? 'bg-yellow-100' :
-                                        'bg-green-100'
-                                    }">
-                                        <span class="text-xl">${
-                                            alert.type === 'error' ? '!' :
-                                            alert.type === 'warning' ? '⚠' :
-                                            '✓'
-                                        }</span>
-                                    </div>
-                                    <p class="font-semibold text-gray-900">${alert.message}</p>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-                
-                <!-- Gráficos -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <!-- Tendência Temporal -->
-                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Evolução Temporal</h3>
-                        <div style="height: 300px;">
-                            <canvas id="trendChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Distribuição de Status -->
-                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Distribuição de Status</h3>
-                        <div style="height: 300px;">
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Top Problemas -->
-                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Colaboradores com Mais Faltas</h3>
-                        <div style="height: 300px;">
-                            <canvas id="topIssuesChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Taxa de Presença Diária -->
-                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Taxa de Presença Diária</h3>
-                        <div style="height: 300px;">
-                            <canvas id="evolutionChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tabela Completa -->
-                <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Quadro Completo de Registros</h3>
-                    <div class="overflow-x-auto">
-                        ${renderAttendanceTable()}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderAttendanceTable() {
-            if (!state.dashboardData || !state.dashboardData.fullGrid) {
-                return '<p class="text-gray-500 text-center py-4">Nenhum dado disponível</p>';
-            }
 
-            const { employees, dates, records } = state.dashboardData.fullGrid;
-            
+        function renderDashboardContent() {
+            switch(state.dashboardTab) {
+                case 'board': return renderDashboardBoard();
+                case 'charts': return renderDashboardCharts();
+                case 'team': return renderDashboardTeam();
+                case 'history': return renderDashboardHistory();
+                default: return renderDashboardBoard();
+            }
+        }
+
+        function renderDashboardBoard() {
+            const { fullGrid } = state.dashboardData;
+            const today = getCurrentDate();
             return `
-                <table class="data-table w-full">
-                    <thead>
-                        <tr>
-                            <th class="text-left">Supervisor</th>
-                            <th class="text-left">Colaborador</th>
-                            <th class="text-left">Função</th>
-                            <th class="text-left">Regime</th>
-                            ${dates.map(date => `
-                                <th class="text-center">${formatDateShort(date)}</th>
-                            `).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${employees.map(emp => `
-                            <tr>
-                                <td class="font-medium text-gray-700">${emp.supervisor}</td>
-                                <td class="font-semibold text-gray-900">${emp.nome}</td>
-                                <td><span class="badge bg-blue-100 text-blue-700">${emp.funcao}</span></td>
-                                <td><span class="badge bg-purple-100 text-purple-700">${emp.regime}</span></td>
-                                ${dates.map(date => {
-                                    const status = records[emp.id]?.[date];
-                                    const statusInfo = status ? STATUS_CODES[status] : null;
-                                    return `
-                                        <td class="text-center">
-                                            ${statusInfo ? `
-                                                <div class="inline-block px-2 py-1 rounded text-xs font-bold" 
-                                                     style="background: ${statusInfo.bg}; color: ${statusInfo.text}"
-                                                     title="${statusInfo.label}">
-                                                    ${status}
-                                                </div>
-                                            ` : '<span class="text-gray-300">—</span>'}
-                                        </td>
-                                    `;
-                                }).join('')}
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden fade-in">
+                    <div class="overflow-x-auto max-h-[75vh]">
+                        <table class="data-table w-full text-sm">
+                            <thead class="bg-blue-800 text-white">
+                                <tr>
+                                    <th class="text-left bg-blue-800 z-20 left-0 sticky">Nome</th>
+                                    <th class="text-left bg-blue-800">Sup.</th>
+                                    ${fullGrid.dates.map(d => `<th class="text-center min-w-[50px] ${d===today?'today-column':''}">${formatDateShort(d)}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${fullGrid.employees.map(e => `
+                                    <tr>
+                                        <td class="sticky left-0 bg-white font-medium text-gray-900 border-r shadow-sm z-10">${e.nome}</td>
+                                        <td class="text-gray-500 text-xs">${e.supervisor}</td>
+                                        ${fullGrid.dates.map(d => {
+                                            const s = fullGrid.records[e.id]?.[d];
+                                            const i = s ? STATUS_CODES[s] : null;
+                                            return `<td class="text-center p-1 ${d===today?'today-column':''}">${i ? `<div class="w-7 h-7 flex items-center justify-center rounded mx-auto font-bold text-xs" style="background:${i.bg};color:${i.text}">${s}</div>` : '<span class="text-gray-200">-</span>'}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             `;
         }
-        
+
+        function renderDashboardCharts() {
+            const d = state.dashboardData;
+            const total = Object.values(d.statusTotals).reduce((a,b)=>a+b,0);
+            return `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 fade-in">
+                    <div class="stat-card border-t-4 border-green-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Presença</p>
+                        <p class="text-2xl font-bold text-gray-900">${total?Math.round((d.statusTotals.P/total)*100):0}%</p>
+                    </div>
+                    <div class="stat-card border-t-4 border-red-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Faltas</p>
+                        <p class="text-2xl font-bold text-gray-900">${total?Math.round((d.statusTotals.F/total)*100):0}%</p>
+                    </div>
+                    <div class="stat-card border-t-4 border-yellow-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Atestados</p>
+                        <p class="text-2xl font-bold text-gray-900">${d.statusTotals.AT||0}</p>
+                    </div>
+                    <div class="stat-card border-t-4 border-blue-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Total</p>
+                        <p class="text-2xl font-bold text-gray-900">${total}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Evolução</h3><canvas id="trendChart"></canvas></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Status</h3><canvas id="statusChart"></canvas></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Maiores Faltas</h3><canvas id="topIssuesChart"></canvas></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Presença Diária</h3><canvas id="evolutionChart"></canvas></div>
+                </div>
+            `;
+        }
+
+        function renderDashboardTeam() {
+            return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-[500px] fade-in"><h3 class="text-lg font-bold mb-4 text-gray-700">Eficiência por Supervisor</h3><div class="h-full pb-10"><canvas id="teamEffectivenessChart"></canvas></div></div>`;
+        }
+
+        function renderDashboardHistory() {
+            // CORREÇÃO: Input separado para não perder o foco ao digitar
+            return `
+                <div class="fade-in">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 sticky top-0 z-10">
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-400">${ICONS.search}</span>
+                            <input type="text" 
+                                placeholder="Buscar colaborador..." 
+                                value="${state.searchQuery}"
+                                oninput="filterHistoryList(this.value)"
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
+                            >
+                        </div>
+                    </div>
+                    <div id="historyResultsGrid" class="grid gap-4 md:grid-cols-2">
+                        ${generateHistoryCardsHTML(state.searchQuery)}
+                    </div>
+                </div>
+            `;
+        }
+
         // ============================================
-        // INITIALIZATION
+        // INICIALIZAÇÃO
         // ============================================
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('user');
             if (savedUser) {
                 state.user = JSON.parse(savedUser);
-                
+                window.history.replaceState({ view: 'login' }, '', '');
                 if (hasGestaoAccess()) {
-                    loadDashboard().then(() => {
-                        state.view = 'dashboard';
-                        render();
-                    });
+                    loadDashboard().then(() => { state.view = 'dashboard'; pushNavigation('dashboard'); });
                 } else {
                     loadEmployees().then(() => {
-                        loadTodayAttendance().then(() => {
-                            state.view = 'attendance';
-                            render();
-                        });
+                        loadTodayAttendance().then(() => { state.view = 'attendance'; pushNavigation('attendance'); });
                     });
                 }
-            } else {
-                render();
-            }
-            
-            // Responsiveness
-            window.addEventListener('resize', () => {
-                if (state.view !== 'login') {
-                    state.sidebarOpen = window.innerWidth >= 768;
-                    render();
-                }
-            });
+            } else render();
         });
     </script>
 </body>
