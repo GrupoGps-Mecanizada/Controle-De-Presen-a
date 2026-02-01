@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Gestão de Presença | GPS Mecanizada</title>
+    <meta name="theme-color" content="#1e40af">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none;
+            background: #f8fafc;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        
+        @keyframes spin { 
+            from { transform: rotate(0deg); } 
+            to { transform: rotate(360deg); } 
+        }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .slide-in-right { animation: slideInRight 0.3s ease-out; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+            border-left: 4px solid;
+        }
+        
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #ef4444; }
+        .toast.info { border-color: #3b82f6; }
+        .toast.warning { border-color: #f59e0b; }
+        
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .toast.success .toast-icon { background: #dcfce7; color: #16a34a; }
+        .toast.error .toast-icon { background: #fee2e2; color: #dc2626; }
+        .toast.info .toast-icon { background: #dbeafe; color: #2563eb; }
+        .toast.warning .toast-icon { background: #fef3c7; color: #d97706; }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: white;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .sidebar.closed { transform: translateX(-100%); }
+        
+        @media (min-width: 768px) {
+            .sidebar { transform: translateX(0) !important; }
+            .main-content { margin-left: 280px; }
+        }
+        
+        /* Status Buttons */
+        .status-btn {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .status-btn:hover:not(.active) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .status-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Dashboard Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* Table */
+        .data-table {
+            font-size: 0.875rem;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .data-table th {
+            position: sticky;
+            top: 0;
+            background: #1e40af;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 16px 12px;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+        
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .data-table tbody tr:hover {
+            background: #f8fafc;
+        }
+        
+        /* Save Button States */
+        .save-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .save-btn.saving::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            to { left: 100%; }
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="bg-white rounded-2xl p-8 text-center">
+            <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-700 font-semibold">Carregando...</p>
+        </div>
+    </div>
+    
+    <!-- App Container -->
+    <div id="app"></div>
+
+    <script>
+        // ============================================
+        // CONFIGURAÇÃO
+        // ============================================
+        const CONFIG = {
+            API_URL: 'https://script.google.com/macros/s/AKfycbxhFChepCDa6Mevm76H3DlJTffuPPNcFKScwhcwRnwtxdeBpGK3krhz_CMIGwAkxT5kaA/exec',
+            CACHE_DURATION: 5 * 60 * 1000, // 5 minutos
+            TOAST_DURATION: 4000
+        };
+        
+        // ============================================
+        // STATUS CODES (ATUALIZADOS - SEM ÍCONES)
+        // ============================================
+        const STATUS_CODES = {
+            'P': { label: 'Presente', color: '#10b981', bg: '#d1fae5', text: '#065f46' },
+            'F': { label: 'Falta', color: '#ef4444', bg: '#fee2e2', text: '#991b1b' },
+            'FE': { label: 'Férias', color: '#f59e0b', bg: '#fef3c7', text: '#92400e' },
+            'TR': { label: 'Treinamento', color: '#3b82f6', bg: '#dbeafe', text: '#1e40af' },
+            'AF': { label: 'Afastado', color: '#6b7280', bg: '#e5e7eb', text: '#374151' },
+            'AT': { label: 'Atestado', color: '#f97316', bg: '#fed7aa', text: '#9a3412' },
+            'FO': { label: 'Folga', color: '#8b5cf6', bg: '#ede9fe', text: '#5b21b6' },
+            'EX': { label: 'Extra', color: '#14b8a6', bg: '#ccfbf1', text: '#115e59' },
+            'TH': { label: 'Troca de Horário', color: '#ec4899', bg: '#fce7f3', text: '#9f1239' },
+            'TE': { label: 'Troca de Escala', color: '#06b6d4', bg: '#cffafe', text: '#164e63' },
+            'DS': { label: 'Desligado', color: '#64748b', bg: '#f1f5f9', text: '#1e293b' }
+        };
+        
+        const ACCESS_LEVELS = {
+            SUPERVISOR: 'supervisor',
+            GESTAO: 'gestao'
+        };
+        
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+        let state = {
+            view: 'login',
+            user: null,
+            employees: [],
+            selectedDate: getCurrentDate(),
+            attendanceRecords: {},
+            isLoading: false,
+            dashboardData: null,
+            sidebarOpen: window.innerWidth >= 768,
+            filters: {
+                startDate: getMonthStart(),
+                endDate: getCurrentDate(),
+                period: '30days'
+            },
+            charts: {},
+            saveState: 'idle' // idle, saving, success, error
+        };
+        
+        // ============================================
+        // CACHE SYSTEM
+        // ============================================
+        const Cache = {
+            set(key, data) {
+                try {
+                    const item = {
+                        data: data,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem(`cache_${key}`, JSON.stringify(item));
+                } catch (e) {
+                    console.warn('Cache set failed:', e);
+                }
+            },
+            
+            get(key) {
+                try {
+                    const item = localStorage.getItem(`cache_${key}`);
+                    if (!item) return null;
+                    
+                    const parsed = JSON.parse(item);
+                    const age = Date.now() - parsed.timestamp;
+                    
+                    if (age > CONFIG.CACHE_DURATION) {
+                        localStorage.removeItem(`cache_${key}`);
+                        return null;
+                    }
+                    
+                    return parsed.data;
+                } catch (e) {
+                    return null;
+                }
+            },
+            
+            clear(pattern) {
+                try {
+                    if (pattern) {
+                        Object.keys(localStorage)
+                            .filter(key => key.startsWith(`cache_${pattern}`))
+                            .forEach(key => localStorage.removeItem(key));
+                    } else {
+                        Object.keys(localStorage)
+                            .filter(key => key.startsWith('cache_'))
+                            .forEach(key => localStorage.removeItem(key));
+                    }
+                } catch (e) {
+                    console.warn('Cache clear failed:', e);
+                }
+            }
+        };
+        
+        // ============================================
+        // TOAST NOTIFICATION SYSTEM
+        // ============================================
+        const Toast = {
+            show(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icons = {
+                    success: '✓',
+                    error: '✕',
+                    info: 'i',
+                    warning: '!'
+                };
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">${icons[type]}</div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-900">${message}</p>
+                    </div>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(20px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, CONFIG.TOAST_DURATION);
+            },
+            
+            success(message) { this.show(message, 'success'); },
+            error(message) { this.show(message, 'error'); },
+            info(message) { this.show(message, 'info'); },
+            warning(message) { this.show(message, 'warning'); }
+        };
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function getCurrentDate() {
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        function getMonthStart() {
+            const date = new Date();
+            return new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+        
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        }
+        
+        function getPreviousDay(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            date.setDate(date.getDate() - 1);
+            return date.toISOString().split('T')[0];
+        }
+        
+        function getNextDay(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            date.setDate(date.getDate() + 1);
+            return date.toISOString().split('T')[0];
+        }
+        
+        function hasGestaoAccess() {
+            return state.user && state.user.accessLevel === ACCESS_LEVELS.GESTAO;
+        }
+        
+        function showLoading(show = true) {
+            document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+        }
+        
+        // ============================================
+        // API CALLS
+        // ============================================
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(endpoint, options);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                Toast.error('Erro de conexão com o servidor');
+                return { success: false, error: error.message };
+            }
+        }
+        
+        async function login(username, password) {
+            const url = `${CONFIG.API_URL}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+            return await apiCall(url);
+        }
+        
+        async function getEmployees(supervisor) {
+            const cacheKey = `employees_${supervisor}`;
+            const cached = Cache.get(cacheKey);
+            if (cached) return cached;
+            
+            const url = `${CONFIG.API_URL}?action=getEmployees&supervisor=${encodeURIComponent(supervisor)}`;
+            const result = await apiCall(url);
+            
+            if (result.success) {
+                Cache.set(cacheKey, result);
+            }
+            
+            return result;
+        }
+        
+        async function getTodayAttendance(supervisor, date) {
+            const cacheKey = `attendance_${supervisor}_${date}`;
+            const cached = Cache.get(cacheKey);
+            if (cached) return cached;
+            
+            const url = `${CONFIG.API_URL}?action=getAttendance&supervisor=${encodeURIComponent(supervisor)}&date=${date}`;
+            const result = await apiCall(url);
+            
+            if (result.success) {
+                Cache.set(cacheKey, result);
+            }
+            
+            return result;
+        }
+        
+        async function saveMultipleAttendance(records) {
+            const result = await apiCall(CONFIG.API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'saveMultipleAttendance', records: records })
+            });
+            
+            // Limpa cache de presença
+            Cache.clear('attendance_');
+            
+            return result;
+        }
+        
+        async function getDashboardData(startDate, endDate) {
+            const cacheKey = `dashboard_${startDate}_${endDate}`;
+            const cached = Cache.get(cacheKey);
+            if (cached) return cached;
+            
+            const url = `${CONFIG.API_URL}?action=getDashboard&startDate=${startDate}&endDate=${endDate}&supervisor=all`;
+            const result = await apiCall(url);
+            
+            if (result.success) {
+                Cache.set(cacheKey, result);
+            }
+            
+            return result;
+        }
+        
+        // ============================================
+        // BUSINESS LOGIC
+        // ============================================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (!username || !password) {
+                Toast.warning('Preencha todos os campos');
+                return;
+            }
+            
+            showLoading(true);
+            
+            const result = await login(username, password);
+            
+            showLoading(false);
+            
+            if (result.success) {
+                state.user = result.supervisor;
+                localStorage.setItem('user', JSON.stringify(result.supervisor));
+                
+                Toast.success(`Bem-vindo, ${result.supervisor.nome}!`);
+                
+                if (hasGestaoAccess()) {
+                    await loadDashboard();
+                    state.view = 'dashboard';
+                } else {
+                    await loadEmployees();
+                    await loadTodayAttendance();
+                    state.view = 'attendance';
+                }
+                
+                render();
+            } else {
+                Toast.error(result.error || 'Credenciais inválidas');
+            }
+        }
+        
+        async function loadEmployees() {
+            const result = await getEmployees(state.user.nome);
+            if (result.success) {
+                state.employees = result.employees;
+            }
+        }
+        
+        async function loadTodayAttendance() {
+            const result = await getTodayAttendance(state.user.nome, state.selectedDate);
+            if (result.success) {
+                state.attendanceRecords = {};
+                result.records.forEach(record => {
+                    state.attendanceRecords[record.employeeId] = record.status;
+                });
+            }
+        }
+        
+        function setAttendance(employeeId, status) {
+            // Optimistic UI Update
+            state.attendanceRecords[employeeId] = status;
+            render();
+            Toast.info('Presença marcada');
+        }
+        
+        async function saveAllAttendance() {
+            const records = [];
+            
+            for (const employeeId in state.attendanceRecords) {
+                const employee = state.employees.find(e => e.id === employeeId);
+                if (employee) {
+                    records.push({
+                        date: state.selectedDate,
+                        employeeId: employee.id,
+                        employeeName: employee.nome,
+                        function: employee.funcao,
+                        regime: employee.regime,
+                        supervisor: state.user.nome,
+                        status: state.attendanceRecords[employeeId],
+                        observations: ''
+                    });
+                }
+            }
+            
+            if (records.length === 0) {
+                Toast.warning('Nenhuma presença registrada');
+                return;
+            }
+            
+            // Optimistic UI
+            state.saveState = 'saving';
+            render();
+            
+            const result = await saveMultipleAttendance(records);
+            
+            if (result.success) {
+                state.saveState = 'success';
+                Toast.success(`${records.length} registros salvos com sucesso!`);
+                
+                setTimeout(() => {
+                    state.saveState = 'idle';
+                    render();
+                }, 2000);
+            } else {
+                state.saveState = 'error';
+                Toast.error('Erro ao salvar: ' + result.error);
+                
+                setTimeout(() => {
+                    state.saveState = 'idle';
+                    render();
+                }, 2000);
+            }
+            
+            render();
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('user');
+            Cache.clear();
+            state = {
+                view: 'login',
+                user: null,
+                employees: [],
+                selectedDate: getCurrentDate(),
+                attendanceRecords: {},
+                isLoading: false,
+                dashboardData: null,
+                sidebarOpen: false,
+                filters: {
+                    startDate: getMonthStart(),
+                    endDate: getCurrentDate(),
+                    period: '30days'
+                },
+                charts: {},
+                saveState: 'idle'
+            };
+            destroyAllCharts();
+            Toast.info('Você saiu do sistema');
+            render();
+        }
+        
+        async function changeDate(newDate) {
+            state.selectedDate = newDate;
+            showLoading(true);
+            await loadTodayAttendance();
+            showLoading(false);
+            render();
+        }
+        
+        async function loadDashboard() {
+            showLoading(true);
+            
+            const result = await getDashboardData(
+                state.filters.startDate,
+                state.filters.endDate
+            );
+            
+            if (result.success) {
+                state.dashboardData = result.data;
+            }
+            
+            showLoading(false);
+            render();
+            
+            setTimeout(() => {
+                renderCharts();
+            }, 100);
+        }
+        
+        function toggleSidebar() {
+            state.sidebarOpen = !state.sidebarOpen;
+            render();
+        }
+        
+        async function navigateTo(view) {
+            state.sidebarOpen = window.innerWidth >= 768;
+            
+            if (view === 'dashboard' && hasGestaoAccess()) {
+                await loadDashboard();
+            } else if (view === 'attendance') {
+                if (!state.employees.length) await loadEmployees();
+                await loadTodayAttendance();
+            }
+            
+            state.view = view;
+            render();
+        }
+        
+        async function applyFilters() {
+            await loadDashboard();
+        }
+        
+        function updateFilter(key, value) {
+            state.filters[key] = value;
+            
+            // Auto-ajusta período quando usuário seleciona datas manualmente
+            if (key === 'startDate' || key === 'endDate') {
+                state.filters.period = 'custom';
+            }
+        }
+        
+        function setPeriod(period) {
+            const today = new Date();
+            let startDate;
+            
+            switch(period) {
+                case '7days':
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - 7);
+                    break;
+                case '30days':
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - 30);
+                    break;
+                case '90days':
+                    startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() - 90);
+                    break;
+                case 'thisMonth':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                    break;
+                case 'lastMonth':
+                    startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    const endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+                    state.filters.endDate = endDate.toISOString().split('T')[0];
+                    break;
+                default:
+                    return;
+            }
+            
+            state.filters.startDate = startDate.toISOString().split('T')[0];
+            if (period !== 'lastMonth') {
+                state.filters.endDate = getCurrentDate();
+            }
+            state.filters.period = period;
+            
+            applyFilters();
+        }
+        
+        // ============================================
+        // CHARTS
+        // ============================================
+        function destroyAllCharts() {
+            Object.values(state.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            state.charts = {};
+        }
+        
+        function renderCharts() {
+            if (!state.dashboardData) return;
+            
+            destroyAllCharts();
+            
+            renderTrendChart();
+            renderStatusDistributionChart();
+            renderTopIssuesChart();
+            renderDailyEvolutionChart();
+        }
+        
+        function renderTrendChart() {
+            const canvas = document.getElementById('trendChart');
+            if (!canvas || !state.dashboardData.dailyStats) return;
+            
+            const ctx = canvas.getContext('2d');
+            const dailyData = state.dashboardData.dailyStats;
+            
+            state.charts.trend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dailyData.map(item => formatDateShort(item.date)),
+                    datasets: [
+                        {
+                            label: 'Presentes',
+                            data: dailyData.map(item => item.P || 0),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Faltas',
+                            data: dailyData.map(item => item.F || 0),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Atestados',
+                            data: dailyData.map(item => item.AT || 0),
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 12, weight: '600' }, padding: 15 }
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderStatusDistributionChart() {
+            const canvas = document.getElementById('statusChart');
+            if (!canvas || !state.dashboardData.statusTotals) return;
+            
+            const ctx = canvas.getContext('2d');
+            const statusData = Object.entries(state.dashboardData.statusTotals)
+                .filter(([_, count]) => count > 0)
+                .sort((a, b) => b[1] - a[1]);
+            
+            state.charts.status = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusData.map(([code]) => STATUS_CODES[code]?.label || code),
+                    datasets: [{
+                        data: statusData.map(([_, count]) => count),
+                        backgroundColor: statusData.map(([code]) => STATUS_CODES[code]?.color || '#6b7280'),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11, weight: '600' }, padding: 10 }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderTopIssuesChart() {
+            const canvas = document.getElementById('topIssuesChart');
+            if (!canvas || !state.dashboardData.topFaltas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            state.charts.topIssues = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: state.dashboardData.topFaltas.slice(0, 10).map(item => 
+                        item.name.split(' ').slice(0, 2).join(' ')
+                    ),
+                    datasets: [{
+                        label: 'Faltas',
+                        data: state.dashboardData.topFaltas.slice(0, 10).map(item => item.count),
+                        backgroundColor: '#ef4444',
+                        borderRadius: 6,
+                        barThickness: 30
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function renderDailyEvolutionChart() {
+            const canvas = document.getElementById('evolutionChart');
+            if (!canvas || !state.dashboardData.dailyStats) return;
+            
+            const ctx = canvas.getContext('2d');
+            const dailyData = state.dashboardData.dailyStats;
+            
+            // Calcula taxa de presença diária
+            const attendanceRate = dailyData.map(item => {
+                const total = Object.values(item).reduce((sum, val) => {
+                    return typeof val === 'number' ? sum + val : sum;
+                }, 0) - (item.date ? 0 : 0);
+                return total > 0 ? Math.round((item.P || 0) / total * 100) : 0;
+            });
+            
+            state.charts.evolution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dailyData.map(item => formatDateShort(item.date)),
+                    datasets: [{
+                        label: 'Taxa de Presença (%)',
+                        data: attendanceRate,
+                        backgroundColor: attendanceRate.map(rate => 
+                            rate >= 95 ? '#10b981' : rate >= 85 ? '#f59e0b' : '#ef4444'
+                        ),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { 
+                                callback: value => value + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+        function render() {
+            const app = document.getElementById('app');
+            
+            switch(state.view) {
+                case 'login':
+                    app.innerHTML = renderLogin();
+                    break;
+                case 'attendance':
+                    app.innerHTML = renderAttendance();
+                    break;
+                case 'dashboard':
+                    app.innerHTML = renderDashboard();
+                    break;
+            }
+        }
+        
+        function renderLogin() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-6" style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);">
+                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden fade-in">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-center">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h1 class="text-3xl font-black text-white mb-2">Sistema de Presença</h1>
+                            <p class="text-blue-100 text-sm font-medium">GPS Mecanizada - Gestão Profissional</p>
+                        </div>
+                        
+                        <form onsubmit="handleLogin(event)" class="p-8 space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Usuário</label>
+                                <input 
+                                    type="text" 
+                                    id="username"
+                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-600 outline-none transition-all"
+                                    placeholder="Digite seu nome de usuário"
+                                    required
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
+                                <input 
+                                    type="password" 
+                                    id="password"
+                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-600 outline-none transition-all"
+                                    placeholder="Digite sua senha"
+                                    required
+                                >
+                            </div>
+                            
+                            <button 
+                                type="submit" 
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-[1.02]"
+                            >
+                                Entrar no Sistema
+                            </button>
+                        </form>
+                        
+                        <div class="px-8 pb-8 text-center text-xs text-gray-400">
+                            <p class="font-medium">Sistema v3.0 Professional | © 2026</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderSidebar() {
+            const menuItems = hasGestaoAccess() ? [
+                { label: 'Dashboard', view: 'dashboard', icon: 'chart' },
+                { label: 'Marcação de Presença', view: 'attendance', icon: 'clipboard' }
+            ] : [
+                { label: 'Marcação de Presença', view: 'attendance', icon: 'clipboard' }
+            ];
+            
+            const icons = {
+                chart: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
+                clipboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>'
+            };
+            
+            return `
+                <!-- Overlay -->
+                ${state.sidebarOpen && window.innerWidth < 768 ? '<div class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onclick="toggleSidebar()"></div>' : ''}
+                
+                <!-- Sidebar -->
+                <aside class="sidebar ${state.sidebarOpen ? '' : 'closed'}">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-br from-blue-600 to-blue-700 text-white p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center font-bold text-xl">
+                                    ${state.user.nome.charAt(0)}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-bold text-sm truncate">${state.user.nome}</h3>
+                                    <p class="text-xs opacity-90">${hasGestaoAccess() ? 'Gestão' : 'Supervisor'}</p>
+                                </div>
+                            </div>
+                            <button onclick="toggleSidebar()" class="p-2 hover:bg-white/20 rounded-lg md:hidden">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Menu -->
+                    <nav class="p-4 flex-1 overflow-y-auto">
+                        ${menuItems.map(item => `
+                            <button 
+                                onclick="navigateTo('${item.view}')"
+                                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all font-medium ${
+                                    state.view === item.view 
+                                        ? 'bg-blue-50 text-blue-700' 
+                                        : 'text-gray-600 hover:bg-gray-50'
+                                }"
+                            >
+                                ${icons[item.icon]}
+                                <span>${item.label}</span>
+                            </button>
+                        `).join('')}
+                        
+                        <div class="border-t border-gray-200 my-4"></div>
+                        
+                        <button 
+                            onclick="handleLogout()"
+                            class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-red-600 hover:bg-red-50"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span>Sair</span>
+                        </button>
+                    </nav>
+                </aside>
+            `;
+        }
+        
+        function renderAttendance() {
+            const totalMarked = Object.keys(state.attendanceRecords).length;
+            const totalEmployees = state.employees.length;
+            const progress = totalEmployees > 0 ? Math.round((totalMarked / totalEmployees) * 100) : 0;
+            
+            const saveButtonStates = {
+                idle: { text: `Salvar ${totalMarked} Registros`, disabled: totalMarked === 0, class: 'bg-green-600 hover:bg-green-700' },
+                saving: { text: 'Salvando...', disabled: true, class: 'bg-green-600 save-btn saving' },
+                success: { text: '✓ Salvo com Sucesso!', disabled: true, class: 'bg-green-500' },
+                error: { text: '✕ Erro ao Salvar', disabled: true, class: 'bg-red-500' }
+            };
+            
+            const btnState = saveButtonStates[state.saveState];
+            
+            return `
+                ${renderSidebar()}
+                
+                <div class="main-content min-h-screen bg-gray-50">
+                    <!-- Header -->
+                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+                        <div class="px-4 py-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">
+                                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                        </svg>
+                                    </button>
+                                    <div>
+                                        <h1 class="text-xl font-bold text-gray-900">Marcação de Presença</h1>
+                                        <p class="text-sm text-gray-500">${state.user.nome}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Date Selector -->
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                <div class="flex items-center justify-between gap-2">
+                                    <button onclick="changeDate('${getPreviousDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded-lg transition-all">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                        </svg>
+                                    </button>
+                                    <div class="flex-1 text-center">
+                                        <input 
+                                            type="date" 
+                                            value="${state.selectedDate}"
+                                            onchange="changeDate(this.value)"
+                                            class="bg-transparent text-center font-semibold outline-none cursor-pointer text-gray-900"
+                                        >
+                                        <p class="text-xs text-gray-500 mt-1">${formatDate(state.selectedDate)}</p>
+                                    </div>
+                                    <button onclick="changeDate('${getNextDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded-lg transition-all">
+                                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress -->
+                            <div class="mt-4">
+                                <div class="flex justify-between text-xs font-semibold text-gray-600 mb-2">
+                                    <span>Progresso</span>
+                                    <span>${totalMarked}/${totalEmployees} (${progress}%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Employees List -->
+                    <main class="p-4 pb-24 max-w-6xl mx-auto">
+                        ${state.employees.length === 0 ? `
+                            <div class="text-center py-16 bg-white rounded-2xl">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <p class="text-gray-500 font-medium">Nenhum colaborador encontrado</p>
+                            </div>
+                        ` : `
+                            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                ${state.employees.map(emp => renderEmployeeCard(emp)).join('')}
+                            </div>
+                        `}
+                    </main>
+
+                    <!-- Fixed Bottom Bar -->
+                    <div class="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 z-30 md:left-[280px]">
+                        <button 
+                            onclick="saveAllAttendance()"
+                            ${btnState.disabled ? 'disabled' : ''}
+                            class="w-full max-w-6xl mx-auto block ${btnState.class} text-white font-bold py-4 rounded-xl shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            ${btnState.text}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderEmployeeCard(employee) {
+            const currentStatus = state.attendanceRecords[employee.id];
+            
+            return `
+                <div class="bg-white rounded-xl shadow-sm border-2 ${currentStatus ? 'border-green-500' : 'border-gray-200'} p-4 fade-in transition-all hover:shadow-md">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-900 mb-2">${employee.nome}</h3>
+                            <div class="flex gap-2 flex-wrap">
+                                <span class="badge bg-blue-100 text-blue-700">${employee.funcao}</span>
+                                <span class="badge bg-purple-100 text-purple-700">${employee.regime}</span>
+                            </div>
+                        </div>
+                        ${currentStatus ? `
+                            <div class="ml-2">
+                                <div class="px-3 py-1 rounded-lg text-xs font-bold" style="background: ${STATUS_CODES[currentStatus].bg}; color: ${STATUS_CODES[currentStatus].text}">
+                                    ${STATUS_CODES[currentStatus].label}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Status Grid -->
+                    <div class="grid grid-cols-3 gap-2">
+                        ${Object.entries(STATUS_CODES).map(([code, info]) => `
+                            <button 
+                                onclick="setAttendance('${employee.id}', '${code}')"
+                                class="status-btn p-2 rounded-lg text-xs font-semibold transition-all ${
+                                    currentStatus === code 
+                                        ? 'active' 
+                                        : 'bg-gray-50 hover:bg-gray-100 text-gray-600'
+                                }"
+                                style="${currentStatus === code ? `background: ${info.bg}; color: ${info.text}; border: 2px solid ${info.color}` : 'border: 2px solid transparent'}"
+                            >
+                                ${info.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderDashboard() {
+            if (!hasGestaoAccess()) {
+                return `
+                    <div class="min-h-screen flex items-center justify-center p-6">
+                        <div class="text-center">
+                            <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            <h2 class="text-2xl font-bold text-gray-700 mb-2">Acesso Restrito</h2>
+                            <p class="text-gray-500">Você não tem permissão para acessar o dashboard.</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            return `
+                ${renderSidebar()}
+                
+                <div class="main-content min-h-screen bg-gray-50">
+                    <!-- Header -->
+                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+                        <div class="px-4 py-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">
+                                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                        </svg>
+                                    </button>
+                                    <div>
+                                        <h1 class="text-xl font-bold text-gray-900">Dashboard Executivo</h1>
+                                        <p class="text-sm text-gray-500">Análise Completa de Presença</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                <!-- Quick Period Selector -->
+                                <div class="flex gap-2 mb-3 overflow-x-auto pb-2">
+                                    ${['7days', '30days', '90days', 'thisMonth', 'lastMonth'].map(period => {
+                                        const labels = {
+                                            '7days': '7 Dias',
+                                            '30days': '30 Dias',
+                                            '90days': '90 Dias',
+                                            'thisMonth': 'Este Mês',
+                                            'lastMonth': 'Mês Passado'
+                                        };
+                                        return `
+                                            <button 
+                                                onclick="setPeriod('${period}')"
+                                                class="px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+                                                    state.filters.period === period 
+                                                        ? 'bg-blue-600 text-white' 
+                                                        : 'bg-white text-gray-600 hover:bg-gray-100'
+                                                }"
+                                            >
+                                                ${labels[period]}
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                
+                                <!-- Custom Date Range -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Data Inicial</label>
+                                        <input 
+                                            type="date" 
+                                            value="${state.filters.startDate}"
+                                            onchange="updateFilter('startDate', this.value)"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Data Final</label>
+                                        <input 
+                                            type="date" 
+                                            value="${state.filters.endDate}"
+                                            onchange="updateFilter('endDate', this.value)"
+                                            class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button 
+                                            onclick="applyFilters()"
+                                            class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all"
+                                        >
+                                            Aplicar Filtros
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main class="p-4 max-w-7xl mx-auto">
+                        ${!state.dashboardData ? `
+                            <div class="text-center py-16">
+                                <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                <p class="text-gray-600 font-medium">Carregando dados...</p>
+                            </div>
+                        ` : renderDashboardContent()}
+                    </main>
+                </div>
+            `;
+        }
+        
+        function renderDashboardContent() {
+            const data = state.dashboardData;
+            
+            // Cálculos inteligentes
+            const total = Object.values(data.statusTotals).reduce((a, b) => a + b, 0);
+            const presencaRate = total > 0 ? Math.round((data.statusTotals.P / total) * 100) : 0;
+            const faltaRate = total > 0 ? Math.round((data.statusTotals.F / total) * 100) : 0;
+            const atestadoRate = total > 0 ? Math.round((data.statusTotals.AT / total) * 100) : 0;
+            
+            // Alertas inteligentes
+            const alerts = [];
+            if (faltaRate > 10) alerts.push({ type: 'error', message: `Taxa de faltas elevada: ${faltaRate}%` });
+            if (atestadoRate > 15) alerts.push({ type: 'warning', message: `Taxa de atestados acima do esperado: ${atestadoRate}%` });
+            if (presencaRate < 85) alerts.push({ type: 'warning', message: `Taxa de presença abaixo da meta: ${presencaRate}%` });
+            if (presencaRate >= 95) alerts.push({ type: 'success', message: `Excelente taxa de presença: ${presencaRate}%` });
+            
+            return `
+                <!-- KPIs Principais -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 fade-in">
+                    <div class="stat-card border-l-4 border-green-500">
+                        <div class="text-sm font-semibold text-gray-500 mb-1">Taxa de Presença</div>
+                        <div class="text-3xl font-black text-gray-900 mb-2">${presencaRate}%</div>
+                        <div class="text-xs text-gray-600">${data.statusTotals.P || 0} de ${total} registros</div>
+                    </div>
+                    
+                    <div class="stat-card border-l-4 border-red-500">
+                        <div class="text-sm font-semibold text-gray-500 mb-1">Taxa de Faltas</div>
+                        <div class="text-3xl font-black text-gray-900 mb-2">${faltaRate}%</div>
+                        <div class="text-xs text-gray-600">${data.statusTotals.F || 0} faltas registradas</div>
+                    </div>
+                    
+                    <div class="stat-card border-l-4 border-orange-500">
+                        <div class="text-sm font-semibold text-gray-500 mb-1">Atestados</div>
+                        <div class="text-3xl font-black text-gray-900 mb-2">${data.statusTotals.AT || 0}</div>
+                        <div class="text-xs text-gray-600">${atestadoRate}% do total</div>
+                    </div>
+                    
+                    <div class="stat-card border-l-4 border-blue-500">
+                        <div class="text-sm font-semibold text-gray-500 mb-1">Total de Registros</div>
+                        <div class="text-3xl font-black text-gray-900 mb-2">${total}</div>
+                        <div class="text-xs text-gray-600">No período selecionado</div>
+                    </div>
+                </div>
+                
+                <!-- Alertas Inteligentes -->
+                ${alerts.length > 0 ? `
+                    <div class="mb-6 space-y-2 fade-in">
+                        ${alerts.map(alert => `
+                            <div class="bg-white rounded-xl p-4 border-l-4 ${
+                                alert.type === 'error' ? 'border-red-500' :
+                                alert.type === 'warning' ? 'border-yellow-500' :
+                                'border-green-500'
+                            }">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center ${
+                                        alert.type === 'error' ? 'bg-red-100' :
+                                        alert.type === 'warning' ? 'bg-yellow-100' :
+                                        'bg-green-100'
+                                    }">
+                                        <span class="text-xl">${
+                                            alert.type === 'error' ? '!' :
+                                            alert.type === 'warning' ? '⚠' :
+                                            '✓'
+                                        }</span>
+                                    </div>
+                                    <p class="font-semibold text-gray-900">${alert.message}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <!-- Gráficos -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Tendência Temporal -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Evolução Temporal</h3>
+                        <div style="height: 300px;">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Distribuição de Status -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Distribuição de Status</h3>
+                        <div style="height: 300px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Problemas -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Colaboradores com Mais Faltas</h3>
+                        <div style="height: 300px;">
+                            <canvas id="topIssuesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Taxa de Presença Diária -->
+                    <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Taxa de Presença Diária</h3>
+                        <div style="height: 300px;">
+                            <canvas id="evolutionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabela Completa -->
+                <div class="bg-white rounded-xl p-6 shadow-sm fade-in">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Quadro Completo de Registros</h3>
+                    <div class="overflow-x-auto">
+                        ${renderAttendanceTable()}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderAttendanceTable() {
+            if (!state.dashboardData || !state.dashboardData.fullGrid) {
+                return '<p class="text-gray-500 text-center py-4">Nenhum dado disponível</p>';
+            }
+
+            const { employees, dates, records } = state.dashboardData.fullGrid;
+            
+            return `
+                <table class="data-table w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Supervisor</th>
+                            <th class="text-left">Colaborador</th>
+                            <th class="text-left">Função</th>
+                            <th class="text-left">Regime</th>
+                            ${dates.map(date => `
+                                <th class="text-center">${formatDateShort(date)}</th>
+                            `).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${employees.map(emp => `
+                            <tr>
+                                <td class="font-medium text-gray-700">${emp.supervisor}</td>
+                                <td class="font-semibold text-gray-900">${emp.nome}</td>
+                                <td><span class="badge bg-blue-100 text-blue-700">${emp.funcao}</span></td>
+                                <td><span class="badge bg-purple-100 text-purple-700">${emp.regime}</span></td>
+                                ${dates.map(date => {
+                                    const status = records[emp.id]?.[date];
+                                    const statusInfo = status ? STATUS_CODES[status] : null;
+                                    return `
+                                        <td class="text-center">
+                                            ${statusInfo ? `
+                                                <div class="inline-block px-2 py-1 rounded text-xs font-bold" 
+                                                     style="background: ${statusInfo.bg}; color: ${statusInfo.text}"
+                                                     title="${statusInfo.label}">
+                                                    ${status}
+                                                </div>
+                                            ` : '<span class="text-gray-300">—</span>'}
+                                        </td>
+                                    `;
+                                }).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                state.user = JSON.parse(savedUser);
+                
+                if (hasGestaoAccess()) {
+                    loadDashboard().then(() => {
+                        state.view = 'dashboard';
+                        render();
+                    });
+                } else {
+                    loadEmployees().then(() => {
+                        loadTodayAttendance().then(() => {
+                            state.view = 'attendance';
+                            render();
+                        });
+                    });
+                }
+            } else {
+                render();
+            }
+            
+            // Responsiveness
+            window.addEventListener('resize', () => {
+                if (state.view !== 'login') {
+                    state.sidebarOpen = window.innerWidth >= 768;
+                    render();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
