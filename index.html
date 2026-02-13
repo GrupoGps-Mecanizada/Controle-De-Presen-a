@@ -2,174 +2,241 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MasterDrive - Sistema de Telemetria Profissional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Gestão de Presença | GPS Mecanizada</title>
+    <meta name="theme-color" content="#1e40af">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Google Fonts: Inter (Fonte Original mais corporativa) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        
-        body { 
-            background: #f8fafc;
-            overflow-x: hidden;
+        * { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
         }
         
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none;
+            background: #f8fafc;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes spin { 
+            from { transform: rotate(0deg); } 
+            to { transform: rotate(360deg); } 
+        }
+        
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .slide-in-right { animation: slideInRight 0.3s ease-out; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+            border-left: 4px solid;
+        }
+        
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #ef4444; }
+        .toast.info { border-color: #3b82f6; }
+        .toast.warning { border-color: #f59e0b; }
+        
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .toast.success .toast-icon { background: #dcfce7; color: #16a34a; }
+        .toast.error .toast-icon { background: #fee2e2; color: #dc2626; }
+        .toast.info .toast-icon { background: #dbeafe; color: #2563eb; }
+        .toast.warning .toast-icon { background: #fef3c7; color: #d97706; }
+        
+        /* Sidebar */
         .sidebar {
             position: fixed;
             left: 0;
             top: 0;
             height: 100vh;
             width: 280px;
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+            background: white;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.08);
             transition: transform 0.3s ease;
             z-index: 1000;
         }
         
         .sidebar.closed { transform: translateX(-100%); }
         
-        .main-content {
-            margin-left: 280px;
-            min-height: 100vh;
-            transition: margin-left 0.3s ease;
+        @media (min-width: 768px) {
+            .sidebar { transform: translateX(0) !important; }
+            .main-content { margin-left: 280px; }
         }
         
-        .main-content.expanded { margin-left: 0; }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .status-trabalhando { background: #d1fae5; color: #065f46; }
-        .status-parado { background: #fee2e2; color: #991b1b; }
-        .status-manutencao { background: #fef3c7; color: #92400e; }
-        .status-sem-apropriacao { background: #e5e7eb; color: #374151; }
-        
-        .vaga-card {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
+        /* Status Buttons */
+        .status-btn {
+            transition: all 0.2s ease;
             cursor: pointer;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
         }
         
-        .vaga-card:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-            transform: translateY(-2px);
+        .status-btn:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
         }
         
-        .modal {
-            display: none;
+        .status-btn.active {
+            transform: scale(1.02);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-width: 0;
+            font-weight: 700;
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 9999;
+            background: rgba(0,0,0,0.5);
+            display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(4px);
+            z-index: 9998;
         }
         
-        .modal.active { display: flex; }
-        
-        .timeline-segment {
-            height: 32px;
-            transition: all 0.3s;
-            position: relative;
-            cursor: pointer;
-        }
-        
-        .timeline-segment:hover { opacity: 0.8; transform: scaleY(1.1); }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 16px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            z-index: 10000;
-            animation: slideIn 0.3s ease-out;
-            border-left: 4px solid;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .toast.success { border-color: #10b981; }
-        .toast.error { border-color: #ef4444; }
-        .toast.warning { border-color: #f59e0b; }
-        .toast.info { border-color: #3b82f6; }
-        
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-top: 20px;
-        }
-        
-        .alert-card {
-            background: white;
-            border-radius: 12px;
-            border-left: 4px solid;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: all 0.2s;
-        }
-        
-        .alert-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .alert-critical { border-color: #ef4444; }
-        .alert-warning { border-color: #f59e0b; }
-        .alert-info { border-color: #3b82f6; }
-        
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { margin-left: 0; }
+        /* Dashboard Cards */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        /* Table */
+        .data-table {
+            font-size: 0.875rem;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .data-table th {
+            position: sticky;
+            top: 0;
+            background: #1e40af;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+
+        /* TODAY COLUMN HIGHLIGHT */
+        .data-table th.today-column {
+            background: #dc2626 !important;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 11;
+        }
+
+        .data-table td.today-column {
+            background: #fff5f5;
+            border-left: 1px solid #fee2e2;
+            border-right: 1px solid #fee2e2;
+            font-weight: 600;
+        }
+        
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Save Button States */
+        .save-btn.saving::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            to { left: 100%; }
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.70rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
     <!-- Toast Container -->
-    <div id="toastContainer"></div>
+    <div id="toastContainer" class="toast-container"></div>
     
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="bg-white rounded-xl p-8 text-center shadow-2xl">
             <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p class="text-gray-700 font-semibold">Carregando...</p>
-        </div>
-    </div>
-    
-    <!-- Timeline Modal -->
-    <div id="timelineModal" class="modal">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-white" id="modalTitle"></h2>
-                    <p class="text-blue-100 text-sm" id="modalSubtitle"></p>
-                </div>
-                <button onclick="closeModal()" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div id="modalBody" class="p-6 overflow-y-auto max-h-[calc(90vh-100px)]"></div>
         </div>
     </div>
     
@@ -178,41 +245,140 @@
 
     <script>
         // ============================================
+        // ÍCONES SVG (CORPORATIVO/ORIGINAL)
+        // ============================================
+        const ICONS = {
+            login: '<svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            dashboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
+            clipboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>',
+            logout: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
+            db: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>',
+            clock: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+            search: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>',
+            chart: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>',
+            users: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>'
+        };
+
+        // ============================================
         // CONFIGURAÇÃO
         // ============================================
         const CONFIG = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbyg3vTDdYTz24nddqFbIGgTjAi_WcUGH1btyrQQ2lsvny_HDwEm-s8EJP5bRNPYpufo8A/exec',
-            REFRESH_INTERVAL: 60000
+            API_URL: 'https://script.google.com/macros/s/AKfycbwLMuYsivgWYtbQ7bjfIcc10CuoKuSjEe3ubrLJG2MoL1_tnfA9kkkufKcNCTPB6cmtDA/exec',
+            CACHE_DURATION: 5 * 60 * 1000,
+            TOAST_DURATION: 4000
+        };
+        
+        // ============================================
+        // STATUS CODES
+        // ============================================
+        const STATUS_CODES = {
+            'P': { label: 'Presente', color: '#10b981', bg: '#d1fae5', text: '#065f46' },
+            'F': { label: 'Falta', color: '#ef4444', bg: '#fee2e2', text: '#991b1b' },
+            'FE': { label: 'Férias', color: '#f59e0b', bg: '#fef3c7', text: '#92400e' },
+            'TR': { label: 'Treinamento', color: '#3b82f6', bg: '#dbeafe', text: '#1e40af' },
+            'AF': { label: 'Afastado', color: '#6b7280', bg: '#e5e7eb', text: '#374151' },
+            'AT': { label: 'Atestado', color: '#f97316', bg: '#fed7aa', text: '#9a3412' },
+            'FO': { label: 'Folga', color: '#8b5cf6', bg: '#ede9fe', text: '#5b21b6' },
+            'EX': { label: 'Extra', color: '#14b8a6', bg: '#ccfbf1', text: '#115e59' },
+            'TH': { label: 'Troca de Horário', color: '#ec4899', bg: '#fce7f3', text: '#9f1239' },
+            'TE': { label: 'Troca de Escala', color: '#06b6d4', bg: '#cffafe', text: '#164e63' },
+            'DS': { label: 'Desligado', color: '#64748b', bg: '#f1f5f9', text: '#1e293b' }
+        };
+        
+        const ACCESS_LEVELS = {
+            SUPERVISOR: 'supervisor',
+            GESTAO: 'gestao'
         };
         
         // ============================================
         // ESTADO GLOBAL
         // ============================================
         let state = {
-            view: 'dashboard',
-            vagas: [],
+            view: 'login',
+            user: null,
+            employees: [],
             selectedDate: getCurrentDate(),
+            attendanceRecords: {},
+            isLoading: false,
+            dashboardData: null,
             sidebarOpen: window.innerWidth >= 768,
             filters: {
-                search: '',
-                status: 'all',
                 startDate: getMonthStart(),
-                endDate: getCurrentDate()
+                endDate: getCurrentDate(),
+                period: '30days'
             },
-            alerts: [],
-            rules: [],
-            dashboardData: null,
-            charts: {}
+            charts: {},
+            saveState: 'idle',
+            navigationStack: [],
+            dashboardTab: 'board', 
+            searchQuery: '' 
         };
         
         // ============================================
-        // UTILITY FUNCTIONS
+        // NAVEGAÇÃO ANDROID
         // ============================================
-        function getCurrentDate() { return new Date().toISOString().split('T')[0]; }
-        function getMonthStart() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; }
-        function formatDate(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); }
-        function formatDateTime(d) { return new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
-        function showLoading(show = true) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
+        function pushNavigation(view, data = {}) {
+            state.navigationStack.push({ 
+                view: state.view, 
+                dashboardTab: state.dashboardTab 
+            });
+            window.history.pushState({ view }, '', '');
+            navigateTo(view);
+        }
+
+        function handleBackButton(event) {
+            if (state.navigationStack.length > 0) {
+                if(event) event.preventDefault();
+                const previous = state.navigationStack.pop();
+                
+                if (previous.view === 'dashboard') {
+                    state.dashboardTab = previous.dashboardTab || 'board';
+                    state.view = 'dashboard';
+                } else {
+                    state.view = previous.view;
+                }
+                render();
+                return true;
+            }
+            return false;
+        }
+
+        window.addEventListener('popstate', (e) => {
+            handleBackButton(e);
+        });
+
+        // ============================================
+        // CACHE SYSTEM
+        // ============================================
+        const Cache = {
+            set(key, data) {
+                try {
+                    const item = { data: data, timestamp: Date.now() };
+                    localStorage.setItem(`cache_${key}`, JSON.stringify(item));
+                } catch (e) { console.warn('Cache set failed:', e); }
+            },
+            get(key) {
+                try {
+                    const item = localStorage.getItem(`cache_${key}`);
+                    if (!item) return null;
+                    const parsed = JSON.parse(item);
+                    if (Date.now() - parsed.timestamp > CONFIG.CACHE_DURATION) {
+                        localStorage.removeItem(`cache_${key}`);
+                        return null;
+                    }
+                    return parsed.data;
+                } catch (e) { return null; }
+            },
+            clear(pattern) {
+                try {
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.startsWith(pattern ? `cache_${pattern}` : 'cache_')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                } catch (e) {}
+            }
+        };
         
         // ============================================
         // TOAST SYSTEM
@@ -222,13 +388,14 @@
                 const container = document.getElementById('toastContainer');
                 const toast = document.createElement('div');
                 toast.className = `toast ${type}`;
-                const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
-                toast.innerHTML = `<div class="flex items-center gap-3"><span class="text-xl">${icons[type]}</span><p class="font-semibold">${message}</p></div>`;
+                const icons = { success: '✓', error: '✕', info: 'i', warning: '!' };
+                toast.innerHTML = `<div class="toast-icon">${icons[type]}</div><div class="flex-1"><p class="text-sm font-semibold text-gray-900">${message}</p></div>`;
                 container.appendChild(toast);
                 setTimeout(() => {
                     toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(20px)';
                     setTimeout(() => toast.remove(), 300);
-                }, 4000);
+                }, CONFIG.TOAST_DURATION);
             },
             success(m) { this.show(m, 'success'); },
             error(m) { this.show(m, 'error'); },
@@ -237,793 +404,743 @@
         };
         
         // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function getCurrentDate() { return new Date().toISOString().split('T')[0]; }
+        function getMonthStart() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; }
+        function formatDate(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
+        function formatDateShort(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); }
+        function getPreviousDay(d) { const D = new Date(d+'T00:00:00'); D.setDate(D.getDate()-1); return D.toISOString().split('T')[0]; }
+        function getNextDay(d) { const D = new Date(d+'T00:00:00'); D.setDate(D.getDate()+1); return D.toISOString().split('T')[0]; }
+        function hasGestaoAccess() { return state.user && state.user.accessLevel === ACCESS_LEVELS.GESTAO; }
+        function showLoading(show = true) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
+        
+        // ============================================
         // API CALLS
         // ============================================
-        async function apiCall(action, params = {}) {
+        async function apiCall(endpoint, options = {}) {
             try {
-                const url = new URL(CONFIG.API_URL);
-                url.searchParams.append('action', action);
-                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-                
-                const response = await fetch(url);
+                const response = await fetch(endpoint, options);
                 return await response.json();
             } catch (error) {
-                console.error('API Error:', error);
                 Toast.error('Erro de conexão');
                 return { success: false, error: error.message };
             }
         }
         
-        async function loadVagas() {
-            const result = await apiCall('getVagas', { date: state.selectedDate });
-            if (result.success) {
-                state.vagas = result.vagas;
+        async function login(u, p) { return await apiCall(`${CONFIG.API_URL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`); }
+        
+        async function getEmployees(sup) {
+            const k = `employees_${sup}`;
+            const c = Cache.get(k); if(c) return c;
+            const r = await apiCall(`${CONFIG.API_URL}?action=getEmployees&supervisor=${encodeURIComponent(sup)}`);
+            if(r.success) Cache.set(k, r);
+            return r;
+        }
+        
+        async function getTodayAttendance(sup, date) {
+            const k = `attendance_${sup}_${date}`;
+            const c = Cache.get(k); if(c) return c;
+            const r = await apiCall(`${CONFIG.API_URL}?action=getAttendance&supervisor=${encodeURIComponent(sup)}&date=${date}`);
+            if(r.success) Cache.set(k, r);
+            return r;
+        }
+        
+        async function saveMultipleAttendance(records) {
+            const r = await apiCall(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveMultipleAttendance', records }) });
+            Cache.clear('attendance_'); Cache.clear('dashboard_');
+            return r;
+        }
+        
+        async function getDashboardData(start, end) {
+            const k = `dashboard_${start}_${end}`;
+            const c = Cache.get(k); if(c) return c;
+            const r = await apiCall(`${CONFIG.API_URL}?action=getDashboard&startDate=${start}&endDate=${end}&supervisor=all`);
+            if(r.success) Cache.set(k, r);
+            return r;
+        }
+        
+        // ============================================
+        // BUSINESS LOGIC
+        // ============================================
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            if (!u || !p) { Toast.warning('Preencha todos os campos'); return; }
+            
+            showLoading(true);
+            const r = await login(u, p);
+            showLoading(false);
+            
+            if (r.success) {
+                state.user = r.supervisor;
+                localStorage.setItem('user', JSON.stringify(r.supervisor));
+                window.history.pushState({ view: 'login' }, '', '');
+                Toast.success(`Bem-vindo, ${r.supervisor.nome}!`);
+                
+                if (hasGestaoAccess()) {
+                    await loadDashboard();
+                    state.view = 'dashboard';
+                } else {
+                    await loadEmployees();
+                    await loadTodayAttendance();
+                    state.view = 'attendance';
+                }
                 render();
+            } else {
+                Toast.error(r.error || 'Credenciais inválidas');
             }
         }
         
-        async function loadAlerts() {
-            const result = await apiCall('getAlerts');
-            if (result.success) {
-                state.alerts = result.alerts;
-                render();
+        async function loadEmployees() {
+            const r = await getEmployees(state.user.nome);
+            if (r.success) state.employees = r.employees;
+        }
+        
+        async function loadTodayAttendance() {
+            const r = await getTodayAttendance(state.user.nome, state.selectedDate);
+            if (r.success) {
+                state.attendanceRecords = {};
+                r.records.forEach(rec => state.attendanceRecords[rec.employeeId] = rec.status);
             }
         }
         
-        async function loadRules() {
-            const result = await apiCall('getRules');
-            if (result.success) {
-                state.rules = result.rules;
-                render();
+        function setAttendance(empId, status) {
+            state.attendanceRecords[empId] = status;
+            render(); // Re-render to show selection color
+            Toast.info('Selecionado: ' + STATUS_CODES[status].label);
+        }
+        
+        async function saveAllAttendance() {
+            const records = [];
+            for (const id in state.attendanceRecords) {
+                const emp = state.employees.find(e => e.id === id);
+                if (emp) records.push({
+                    date: state.selectedDate,
+                    employeeId: emp.id,
+                    employeeName: emp.nome,
+                    function: emp.funcao,
+                    regime: emp.regime,
+                    supervisor: state.user.nome,
+                    status: state.attendanceRecords[id],
+                    observations: ''
+                });
             }
+            
+            if (!records.length) { Toast.warning('Nada a salvar'); return; }
+            
+            state.saveState = 'saving';
+            render();
+            
+            const r = await saveMultipleAttendance(records);
+            
+            if (r.success) {
+                state.saveState = 'success';
+                Toast.success('Salvo com sucesso!');
+            } else {
+                state.saveState = 'error';
+                Toast.error('Erro: ' + r.error);
+            }
+            
+            setTimeout(() => { state.saveState = 'idle'; render(); }, 2000);
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('user');
+            Cache.clear();
+            state = {
+                view: 'login',
+                user: null,
+                employees: [],
+                selectedDate: getCurrentDate(),
+                attendanceRecords: {},
+                isLoading: false,
+                dashboardData: null,
+                sidebarOpen: false,
+                filters: { startDate: getMonthStart(), endDate: getCurrentDate(), period: '30days' },
+                charts: {},
+                saveState: 'idle',
+                navigationStack: [],
+                dashboardTab: 'board',
+                searchQuery: ''
+            };
+            destroyAllCharts();
+            render();
+        }
+        
+        async function changeDate(d) {
+            state.selectedDate = d;
+            showLoading(true);
+            await loadTodayAttendance();
+            showLoading(false);
+            render();
         }
         
         async function loadDashboard() {
-            const result = await apiCall('getDashboardData', {
-                startDate: state.filters.startDate,
-                endDate: state.filters.endDate
-            });
-            if (result.success) {
-                state.dashboardData = result.data;
-                render();
-                setTimeout(renderCharts, 100);
-            }
-        }
-        
-        async function saveRule(rule) {
-            showLoading();
-            const result = await apiCall('saveRule', rule);
+            showLoading(true);
+            const r = await getDashboardData(state.filters.startDate, state.filters.endDate);
+            if (r.success) state.dashboardData = r.data;
             showLoading(false);
-            if (result.success) {
-                Toast.success('Regra salva com sucesso!');
-                await loadRules();
-            } else {
-                Toast.error('Erro ao salvar regra');
-            }
+            render();
+            if (state.dashboardTab === 'charts') setTimeout(renderCharts, 100);
         }
         
-        // ============================================
-        // NAVIGATION
-        // ============================================
-        function navigateTo(view) {
-            state.view = view;
+        function toggleSidebar() { state.sidebarOpen = !state.sidebarOpen; render(); }
+        
+        async function navigateTo(view) {
             state.sidebarOpen = window.innerWidth >= 768;
-            
-            if (view === 'dashboard') loadDashboard();
-            else if (view === 'monitoring') loadVagas();
-            else if (view === 'alerts') loadAlerts();
-            else if (view === 'settings') loadRules();
-            
-            render();
-        }
-        
-        function toggleSidebar() {
-            state.sidebarOpen = !state.sidebarOpen;
-            render();
-        }
-        
-        // ============================================
-        // MODAL FUNCTIONS
-        // ============================================
-        function showTimeline(vaga) {
-            const modal = document.getElementById('timelineModal');
-            const title = document.getElementById('modalTitle');
-            const subtitle = document.getElementById('modalSubtitle');
-            const body = document.getElementById('modalBody');
-            
-            title.textContent = vaga.nome;
-            subtitle.textContent = vaga.equipamento || 'Sem equipamento';
-            
-            body.innerHTML = renderTimelineContent(vaga);
-            
-            modal.classList.add('active');
-        }
-        
-        function closeModal() {
-            document.getElementById('timelineModal').classList.remove('active');
-        }
-        
-        function renderTimelineContent(vaga) {
-            if (!vaga.eventos || vaga.eventos.length === 0) {
-                return '<p class="text-gray-500 text-center py-8">Nenhum evento registrado</p>';
+            if (view === 'dashboard' && hasGestaoAccess()) await loadDashboard();
+            else if (view === 'attendance') {
+                if (!state.employees.length) await loadEmployees();
+                await loadTodayAttendance();
             }
+            state.view = view;
+            render();
+        }
+
+        function switchDashboardTab(tab) {
+            state.dashboardTab = tab;
+            render();
+            if (tab === 'charts' || tab === 'team') setTimeout(renderCharts, 100);
+            if (tab === 'board') setTimeout(scrollToToday, 100);
+        }
+        
+        async function applyFilters() { await loadDashboard(); }
+        
+        function updateFilter(k, v) {
+            state.filters[k] = v;
+            if (k === 'startDate' || k === 'endDate') state.filters.period = 'custom';
+        }
+        
+        function setPeriod(p) {
+            const today = new Date();
+            let start;
+            if (p==='7days') start = new Date(today.setDate(today.getDate()-7));
+            else if (p==='30days') start = new Date(today.setDate(today.getDate()-30));
+            else if (p==='thisMonth') start = new Date(today.getFullYear(), today.getMonth(), 1);
             
-            const dayMinutes = 24 * 60;
-            
-            return `
-                <div class="mb-6">
-                    <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Timeline do Dia
-                    </h3>
-                    
-                    <div class="flex justify-between text-xs text-gray-500 mb-2">
-                        <span>00:00</span>
-                        <span>06:00</span>
-                        <span>12:00</span>
-                        <span>18:00</span>
-                        <span>24:00</span>
-                    </div>
-                    
-                    <div class="flex rounded-lg overflow-hidden border border-gray-200 mb-4">
-                        ${vaga.eventos.map(evt => {
-                            const minutes = parseTimeToMinutes(evt.tempoTotal);
-                            const percentage = (minutes / dayMinutes) * 100;
-                            const statusClass = normalizeStatus(evt.status || evt.descricao);
-                            const color = getStatusColor(statusClass);
-                            
-                            return `<div class="timeline-segment" style="width: ${percentage}%; background: ${color}" title="${evt.descricao} - ${evt.tempoTotal}"></div>`;
-                        }).join('')}
-                    </div>
-                    
-                    <div class="flex gap-4 flex-wrap text-xs">
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-green-500"></div><span>Trabalhando</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-red-500"></div><span>Parado</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-yellow-500"></div><span>Manutenção</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-gray-400"></div><span>Sem Apropriação</span></div>
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        Eventos Detalhados
-                    </h3>
-                    
-                    <div class="space-y-2">
-                        ${vaga.eventos.map(evt => {
-                            const statusClass = normalizeStatus(evt.status || evt.descricao);
-                            const statusLabel = getStatusLabel(statusClass);
-                            const statusColor = getStatusColor(statusClass);
-                            
-                            return `
-                                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div>
-                                            <span class="font-mono text-sm text-gray-600">${evt.dataInicio.split(' ')[1]}</span>
-                                            <span class="text-gray-400 mx-2">→</span>
-                                            <span class="font-mono text-sm text-gray-600">${evt.dataFim.split(' ')[1]}</span>
-                                        </div>
-                                        <span class="status-badge" style="background: ${statusColor}15; color: ${statusColor}">${statusLabel}</span>
-                                    </div>
-                                    <p class="text-sm text-gray-700">${evt.descricao}</p>
-                                    <p class="text-xs text-gray-500 mt-1">Duração: ${evt.tempoTotal}</p>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
+            state.filters.startDate = start.toISOString().split('T')[0];
+            state.filters.endDate = getCurrentDate();
+            state.filters.period = p;
+            applyFilters();
         }
-        
-        // ============================================
-        // HELPER FUNCTIONS
-        // ============================================
-        function parseTimeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const parts = timeStr.split(':');
-            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        }
-        
-        function normalizeStatus(text) {
-            if (!text) return 'sem-apropriacao';
-            const t = text.toLowerCase();
-            if (t.includes('ligado') || t.includes('trabalhando')) return 'trabalhando';
-            if (t.includes('desligado') || t.includes('parado')) return 'parado';
-            if (t.includes('manutenção') || t.includes('manutencao')) return 'manutencao';
-            return 'sem-apropriacao';
-        }
-        
-        function getStatusLabel(status) {
-            const labels = {
-                'trabalhando': 'Trabalhando',
-                'parado': 'Parado',
-                'manutencao': 'Manutenção',
-                'sem-apropriacao': 'Sem Apropriação'
-            };
-            return labels[status] || 'Desconhecido';
-        }
-        
-        function getStatusColor(status) {
-            const colors = {
-                'trabalhando': '#10b981',
-                'parado': '#ef4444',
-                'manutencao': '#f59e0b',
-                'sem-apropriacao': '#9ca3af'
-            };
-            return colors[status] || '#6b7280';
+
+        function scrollToToday() {
+            const el = document.querySelector('.today-column');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
         
         // ============================================
         // CHARTS
         // ============================================
-        function destroyAllCharts() {
-            Object.values(state.charts).forEach(c => c && c.destroy());
-            state.charts = {};
-        }
+        function destroyAllCharts() { Object.values(state.charts).forEach(c => c && c.destroy()); state.charts = {}; }
         
         function renderCharts() {
             if (!state.dashboardData) return;
             destroyAllCharts();
-            
-            renderStatusChart();
-            renderTrendChart();
-            renderEfficiencyChart();
-        }
-        
-        function renderStatusChart() {
-            const ctx = document.getElementById('statusChart')?.getContext('2d');
-            if (!ctx) return;
-            
-            const data = state.dashboardData.statusDistribution;
-            
-            state.charts.status = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(data).map(getStatusLabel),
-                    datasets: [{
-                        data: Object.values(data),
-                        backgroundColor: Object.keys(data).map(getStatusColor),
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
-                    }
-                }
-            });
+            if (state.dashboardTab === 'charts') {
+                renderTrendChart();
+                renderStatusDistributionChart();
+                renderTopIssuesChart();
+                renderDailyEvolutionChart();
+            } else if (state.dashboardTab === 'team') {
+                renderTeamEffectivenessChart();
+            }
         }
         
         function renderTrendChart() {
             const ctx = document.getElementById('trendChart')?.getContext('2d');
             if (!ctx) return;
-            
-            const data = state.dashboardData.dailyTrend;
-            
+            const daily = state.dashboardData.dailyStats;
             state.charts.trend = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(d => formatDate(d.date)),
+                    labels: daily.map(i => formatDateShort(i.date)),
                     datasets: [
-                        {
-                            label: 'Trabalhando',
-                            data: data.map(d => d.trabalhando),
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Parado',
-                            data: data.map(d => d.parado),
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }
+                        { label: 'Presentes', data: daily.map(i => i.P||0), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 },
+                        { label: 'Faltas', data: daily.map(i => i.F||0), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3 }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
             });
         }
         
-        function renderEfficiencyChart() {
-            const ctx = document.getElementById('efficiencyChart')?.getContext('2d');
+        function renderStatusDistributionChart() {
+            const ctx = document.getElementById('statusChart')?.getContext('2d');
             if (!ctx) return;
-            
-            const data = state.dashboardData.efficiency;
-            
-            state.charts.efficiency = new Chart(ctx, {
-                type: 'bar',
+            const stats = Object.entries(state.dashboardData.statusTotals).filter(([,c])=>c>0).sort((a,b)=>b[1]-a[1]);
+            state.charts.status = new Chart(ctx, {
+                type: 'doughnut',
                 data: {
-                    labels: data.map(d => d.vaga),
+                    labels: stats.map(([c]) => STATUS_CODES[c]?.label || c),
                     datasets: [{
-                        label: 'Eficiência (%)',
-                        data: data.map(d => d.percentage),
-                        backgroundColor: data.map(d => d.percentage >= 80 ? '#10b981' : d.percentage >= 60 ? '#f59e0b' : '#ef4444'),
-                        borderRadius: 8
+                        data: stats.map(([,c]) => c),
+                        backgroundColor: stats.map(([c]) => STATUS_CODES[c]?.color || '#ccc'),
+                        borderWidth: 0
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { max: 100 }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
             });
         }
         
+        function renderTopIssuesChart() {
+            const ctx = document.getElementById('topIssuesChart')?.getContext('2d');
+            if (!ctx) return;
+            state.charts.topIssues = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: state.dashboardData.topFaltas.slice(0, 10).map(i => i.name.split(' ').slice(0,2).join(' ')),
+                    datasets: [{ label: 'Faltas', data: state.dashboardData.topFaltas.slice(0, 10).map(i => i.count), backgroundColor: '#ef4444', borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+            });
+        }
+        
+        function renderDailyEvolutionChart() {
+            const ctx = document.getElementById('evolutionChart')?.getContext('2d');
+            if (!ctx) return;
+            const rates = state.dashboardData.dailyStats.map(i => {
+                const t = Object.values(i).reduce((s,v)=> (typeof v==='number'&&v!==i.date)?s+v:s, 0);
+                return t>0 ? Math.round((i.P||0)/t*100) : 0;
+            });
+            state.charts.evolution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: state.dashboardData.dailyStats.map(i => formatDateShort(i.date)),
+                    datasets: [{ label: 'Taxa (%)', data: rates, backgroundColor: rates.map(r => r>=95?'#10b981':r>=85?'#f59e0b':'#ef4444'), borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { max: 100 } } }
+            });
+        }
+
+        function renderTeamEffectivenessChart() {
+            const ctx = document.getElementById('teamEffectivenessChart')?.getContext('2d');
+            if (!ctx) return;
+            const supStats = {};
+            const { employees, records, dates } = state.dashboardData.fullGrid;
+            employees.forEach(e => {
+                if(!supStats[e.supervisor]) supStats[e.supervisor] = {t:0, p:0};
+                dates.forEach(d => {
+                    const s = records[e.id]?.[d];
+                    if(s) { supStats[e.supervisor].t++; if(s==='P') supStats[e.supervisor].p++; }
+                });
+            });
+            const labels = Object.keys(supStats);
+            const data = labels.map(s => supStats[s].t>0 ? Math.round((supStats[s].p/supStats[s].t)*100) : 0);
+            state.charts.team = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: [{ label: 'Eficiência (%)', data, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { max: 100 } } }
+            });
+        }
+        
+        // ============================================
+        // SEARCH FILTER LOGIC (BUG FIX)
+        // ============================================
+        // Esta função atualiza apenas a lista, sem destruir o input
+        function filterHistoryList(query) {
+            state.searchQuery = query;
+            const grid = document.getElementById('historyResultsGrid');
+            if(grid) {
+                grid.innerHTML = generateHistoryCardsHTML(query);
+            }
+        }
+
+        function generateHistoryCardsHTML(query) {
+            const employees = state.dashboardData.fullGrid.employees;
+            const records = state.dashboardData.fullGrid.records;
+            const dates = state.dashboardData.fullGrid.dates;
+            const q = query.toLowerCase();
+            
+            const filtered = employees.filter(e => e.nome.toLowerCase().includes(q));
+
+            if(filtered.length === 0) return '<p class="text-gray-500 text-center col-span-2 py-8">Nenhum resultado encontrado.</p>';
+
+            return filtered.slice(0, 50).map(emp => {
+                let stats = { P:0, F:0, AT:0 };
+                let history = [];
+                dates.forEach(d => {
+                    const s = records[emp.id]?.[d];
+                    if(s) {
+                        if(stats[s] !== undefined) stats[s]++;
+                        history.push({date: d, status: s});
+                    }
+                });
+                const total = stats.P + stats.F + stats.AT; 
+                const rate = total > 0 ? Math.round((stats.P/total)*100) : 0;
+
+                return `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-gray-900">${emp.nome}</h4>
+                                <p class="text-xs text-gray-500">${emp.supervisor} | ${emp.funcao}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xl font-bold ${stats.F > 2 ? 'text-red-500' : 'text-green-500'}">
+                                    ${rate}%
+                                </span>
+                                <p class="text-[10px] text-gray-400">Presença</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                            ${history.reverse().slice(0, 10).map(h => `
+                                <div class="flex flex-col items-center min-w-[30px]">
+                                    <span class="text-[10px] text-gray-400">${formatDateShort(h.date)}</span>
+                                    <span class="text-xs font-bold" style="color:${STATUS_CODES[h.status]?.color}">${h.status}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         // ============================================
         // RENDER FUNCTIONS
         // ============================================
         function render() {
             const app = document.getElementById('app');
-            app.innerHTML = `
-                ${renderSidebar()}
-                <div class="main-content ${state.sidebarOpen ? '' : 'expanded'}">
-                    ${renderHeader()}
-                    ${renderContent()}
+            switch(state.view) {
+                case 'login': app.innerHTML = renderLogin(); break;
+                case 'attendance': app.innerHTML = renderAttendance(); break;
+                case 'dashboard': app.innerHTML = renderDashboard(); break;
+            }
+        }
+        
+        function renderLogin() {
+            return `
+                <div class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-600 to-blue-800">
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden fade-in">
+                        <div class="bg-blue-600 p-8 text-center">
+                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                ${ICONS.login}
+                            </div>
+                            <h1 class="text-3xl font-bold text-white mb-2">Sistema de Presença</h1>
+                            <p class="text-blue-100 text-sm font-medium">GPS Mecanizada - Gestão Profissional</p>
+                        </div>
+                        <form onsubmit="handleLogin(event)" class="p-8 space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Usuário</label>
+                                <input type="text" id="username" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
+                                <input type="password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition-all">Entrar</button>
+                        </form>
+                        <div class="px-8 pb-8 text-center text-xs text-gray-400"><p>© 2026 GPS Mecanizada</p></div>
+                    </div>
                 </div>
             `;
         }
         
         function renderSidebar() {
+            const isGestao = hasGestaoAccess();
+            const extraLinks = isGestao ? [
+                { label: 'Banco de Dados', url: 'https://docs.google.com/spreadsheets/d/1XMMLkcLQrDhD96aYOiWNTHkaOz2Qn7f99ADCv9e5WMY/edit', icon: ICONS.db }
+            ] : [
+                { label: 'Classificar Horas', url: 'https://grupogps-mecanizada.github.io/CLASSIFICAR-HORAS/', icon: ICONS.clock }
+            ];
+
+            const menuItems = isGestao ? [
+                { label: 'Dashboard', view: 'dashboard', icon: ICONS.dashboard },
+                { label: 'Marcação de Presença', view: 'attendance', icon: ICONS.clipboard }
+            ] : [
+                { label: 'Marcação de Presença', view: 'attendance', icon: ICONS.clipboard }
+            ];
+            
             return `
+                ${state.sidebarOpen && window.innerWidth < 768 ? '<div class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onclick="toggleSidebar()"></div>' : ''}
                 <aside class="sidebar ${state.sidebarOpen ? '' : 'closed'}">
-                    <div class="p-6">
-                        <div class="flex items-center gap-3 mb-8">
-                            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                                <span class="text-white font-bold text-2xl">M</span>
+                    <div class="bg-blue-800 text-white p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
+                                    ${state.user.nome.charAt(0)}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-bold text-sm truncate">${state.user.nome}</h3>
+                                    <p class="text-xs opacity-70">${isGestao ? 'Gestão' : 'Supervisor'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h1 class="text-white font-bold text-lg">MasterDrive</h1>
-                                <p class="text-blue-200 text-xs">Sistema de Telemetria</p>
-                            </div>
+                            <button onclick="toggleSidebar()" class="p-2 hover:bg-white/20 rounded-lg md:hidden">✕</button>
                         </div>
-                        
-                        <nav class="space-y-2">
-                            ${renderNavItem('dashboard', 'Dashboard', `
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                </svg>
-                            `)}
-                            ${renderNavItem('monitoring', 'Monitoramento', `
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                </svg>
-                            `)}
-                            ${renderNavItem('alerts', 'Alertas', `
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                                </svg>
-                            `, state.alerts.length)}
-                            ${renderNavItem('settings', 'Configurações', `
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                            `)}
-                        </nav>
                     </div>
-                    
-                    <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-blue-900">
-                        <a href="https://docs.google.com/spreadsheets/d/SEU_ID_AQUI" target="_blank" class="flex items-center gap-3 text-blue-200 hover:text-white transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
-                            </svg>
-                            <span class="text-sm font-medium">Ver Banco de Dados</span>
-                        </a>
-                    </div>
+                    <nav class="p-4 flex-1 overflow-y-auto space-y-1">
+                        ${menuItems.map(item => `
+                            <button onclick="pushNavigation('${item.view}')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${state.view === item.view ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}">
+                                ${item.icon}<span>${item.label}</span>
+                            </button>
+                        `).join('')}
+                        <div class="border-t border-gray-200 my-4"></div>
+                        ${extraLinks.map(link => `
+                            <a href="${link.url}" target="_blank" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-gray-600 hover:bg-gray-50">
+                                ${link.icon}<span>${link.label}</span>
+                            </a>
+                        `).join('')}
+                        <div class="border-t border-gray-200 my-4"></div>
+                        <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-red-600 hover:bg-red-50">
+                            ${ICONS.logout}<span>Sair</span>
+                        </button>
+                    </nav>
                 </aside>
             `;
         }
         
-        function renderNavItem(view, label, icon, badge = null) {
-            const isActive = state.view === view;
+        function renderAttendance() {
+            const total = state.employees.length;
+            const marked = Object.keys(state.attendanceRecords).length;
+            const progress = total > 0 ? Math.round((marked / total) * 100) : 0;
+            const btn = {
+                idle: { text: `Salvar ${marked} Registros`, disabled: marked === 0, class: 'bg-green-600 hover:bg-green-700' },
+                saving: { text: 'Salvando...', disabled: true, class: 'bg-green-600 save-btn saving' },
+                success: { text: '✓ Salvo', disabled: true, class: 'bg-green-500' },
+                error: { text: '✕ Erro', disabled: true, class: 'bg-red-500' }
+            }[state.saveState];
+            
             return `
-                <button onclick="navigateTo('${view}')" class="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all ${isActive ? 'bg-blue-600 text-white' : 'text-blue-100 hover:bg-blue-900'}">
-                    <div class="flex items-center gap-3">
-                        ${icon}
-                        <span class="font-medium">${label}</span>
-                    </div>
-                    ${badge ? `<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">${badge}</span>` : ''}
-                </button>
-            `;
-        }
-        
-        function renderHeader() {
-            return `
-                <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
-                    <div class="px-6 py-4 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                                </svg>
-                            </button>
-                            <div>
-                                <h2 class="text-xl font-bold text-gray-900">${getTitleForView()}</h2>
-                                <p class="text-sm text-gray-500">${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                ${renderSidebar()}
+                <div class="main-content min-h-screen bg-gray-50 pb-24">
+                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+                        <div class="px-4 py-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">☰</button>
+                                    <div>
+                                        <h1 class="text-lg font-bold text-gray-900">Marcação de Presença</h1>
+                                        <p class="text-sm text-gray-500">${state.user.nome}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-2 border border-gray-200 flex items-center justify-between">
+                                <button onclick="changeDate('${getPreviousDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded shadow-sm">◀</button>
+                                <div class="text-center">
+                                    <input type="date" value="${state.selectedDate}" onchange="changeDate(this.value)" class="bg-transparent text-center font-bold outline-none text-gray-900">
+                                    <p class="text-xs text-gray-500">${formatDate(state.selectedDate)}</p>
+                                </div>
+                                <button onclick="changeDate('${getNextDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded shadow-sm">▶</button>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-xs font-semibold text-gray-600 mb-1"><span>Progresso</span><span>${progress}%</span></div>
+                                <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div></div>
                             </div>
                         </div>
-                        
-                        <div class="flex items-center gap-3">
-                            <button onclick="loadVagas()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                                <span class="hidden sm:inline">Atualizar</span>
-                            </button>
-                        </div>
-                    </div>
-                </header>
-            `;
-        }
-        
-        function getTitleForView() {
-            const titles = {
-                'dashboard': 'Dashboard',
-                'monitoring': 'Monitoramento em Tempo Real',
-                'alerts': 'Central de Alertas',
-                'settings': 'Configurações do Sistema'
-            };
-            return titles[state.view] || 'MasterDrive';
-        }
-        
-        function renderContent() {
-            switch(state.view) {
-                case 'dashboard': return renderDashboardView();
-                case 'monitoring': return renderMonitoringView();
-                case 'alerts': return renderAlertsView();
-                case 'settings': return renderSettingsView();
-                default: return '<div></div>';
-            }
-        }
-        
-        function renderDashboardView() {
-            if (!state.dashboardData) {
-                return '<div class="p-8 text-center"><div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div><p class="mt-4 text-gray-500">Carregando dashboard...</p></div>';
-            }
-            
-            return `
-                <main class="p-6 max-w-7xl mx-auto">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                        ${renderStatCard('Total de Vagas', state.dashboardData.totalVagas, 'blue', `
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                        `)}
-                        ${renderStatCard('Trabalhando', state.dashboardData.statusDistribution.trabalhando || 0, 'green', `
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        `)}
-                        ${renderStatCard('Parado', state.dashboardData.statusDistribution.parado || 0, 'red', `
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        `)}
-                        ${renderStatCard('Alertas Ativos', state.alerts.length, 'yellow', `
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                            </svg>
-                        `)}
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h3 class="font-bold text-gray-700 mb-4">Distribuição de Status</h3>
-                            <div class="chart-container"><canvas id="statusChart"></canvas></div>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h3 class="font-bold text-gray-700 mb-4">Tendência Semanal</h3>
-                            <div class="chart-container"><canvas id="trendChart"></canvas></div>
-                        </div>
-                        
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h3 class="font-bold text-gray-700 mb-4">Eficiência por Vaga</h3>
-                            <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
-                        </div>
-                    </div>
-                </main>
-            `;
-        }
-        
-        function renderStatCard(label, value, color, icon) {
-            const colors = {
-                blue: 'bg-blue-100 text-blue-600',
-                green: 'bg-green-100 text-green-600',
-                red: 'bg-red-100 text-red-600',
-                yellow: 'bg-yellow-100 text-yellow-600'
-            };
-            
-            return `
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600 mb-1">${label}</p>
-                            <p class="text-3xl font-bold text-gray-900">${value}</p>
-                        </div>
-                        <div class="${colors[color]} p-4 rounded-xl">
-                            ${icon}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderMonitoringView() {
-            const filtered = state.vagas.filter(v => {
-                const matchSearch = !state.filters.search || v.nome.toLowerCase().includes(state.filters.search.toLowerCase());
-                const matchStatus = state.filters.status === 'all' || normalizeStatus(v.status) === state.filters.status;
-                return matchSearch && matchStatus;
-            });
-            
-            return `
-                <main class="p-6 max-w-7xl mx-auto">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-                        <div class="flex flex-wrap gap-4">
-                            <input type="text" placeholder="Buscar vaga..." oninput="state.filters.search = this.value; render()" class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                            
-                            <select onchange="state.filters.status = this.value; render()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="all">Todos Status</option>
-                                <option value="trabalhando">Trabalhando</option>
-                                <option value="parado">Parado</option>
-                                <option value="manutencao">Manutenção</option>
-                                <option value="sem-apropriacao">Sem Apropriação</option>
-                            </select>
-                            
-                            <input type="date" value="${state.selectedDate}" onchange="state.selectedDate = this.value; loadVagas()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                    </div>
-                    
-                    ${filtered.length === 0 ? '<p class="text-center py-12 text-gray-500">Nenhuma vaga encontrada</p>' : `
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            ${filtered.map(renderVagaCard).join('')}
-                        </div>
-                    `}
-                </main>
-            `;
-        }
-        
-        function renderVagaCard(vaga) {
-            const status = normalizeStatus(vaga.status);
-            const statusLabel = getStatusLabel(status);
-            const statusColor = getStatusColor(status);
-            
-            return `
-                <div class="vaga-card p-6" onclick='showTimeline(${JSON.stringify(vaga)})'>
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="font-bold text-gray-900 text-lg">${vaga.nome}</h3>
-                            <p class="text-sm text-gray-500">${vaga.equipamento || 'Sem equipamento'}</p>
-                        </div>
-                        <span class="status-badge" style="background: ${statusColor}15; color: ${statusColor}">${statusLabel}</span>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Horário:</span>
-                            <span class="font-semibold text-gray-900">${vaga.horario || '-'}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Última Atualização:</span>
-                            <span class="font-semibold text-gray-900">${vaga.ultimaAtualizacao ? formatDateTime(vaga.ultimaAtualizacao) : '-'}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 pt-4 border-t border-gray-100">
-                        <button class="w-full py-2 text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Ver Timeline
+                    </header>
+                    <main class="p-4 max-w-6xl mx-auto">
+                        ${state.employees.length === 0 ? '<div class="text-center py-10 text-gray-500">Nenhum colaborador</div>' : 
+                          `<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">${state.employees.map(emp => renderEmployeeCard(emp)).join('')}</div>`}
+                    </main>
+                    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 md:left-[280px]">
+                        <button onclick="saveAllAttendance()" ${btn.disabled ? 'disabled' : ''} class="w-full max-w-4xl mx-auto block ${btn.class} text-white font-bold py-3 rounded-lg shadow transition-all">
+                            ${btn.text}
                         </button>
                     </div>
                 </div>
             `;
         }
         
-        function renderAlertsView() {
-            return `
-                <main class="p-6 max-w-4xl mx-auto">
-                    ${state.alerts.length === 0 ? `
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <h3 class="text-lg font-bold text-gray-900 mb-2">Nenhum alerta ativo</h3>
-                            <p class="text-gray-500">Tudo está funcionando normalmente</p>
-                        </div>
-                    ` : `
-                        <div class="space-y-4">
-                            ${state.alerts.map(renderAlertCard).join('')}
-                        </div>
-                    `}
-                </main>
-            `;
-        }
-        
-        function renderAlertCard(alert) {
-            const severityClass = alert.severity === 'critical' ? 'alert-critical' : alert.severity === 'warning' ? 'alert-warning' : 'alert-info';
-            const severityIcon = alert.severity === 'critical' ? '🔴' : alert.severity === 'warning' ? '⚠️' : 'ℹ️';
+        function renderEmployeeCard(employee) {
+            const currentStatus = state.attendanceRecords[employee.id];
             
             return `
-                <div class="alert-card ${severityClass}">
-                    <div class="flex items-start gap-4">
-                        <span class="text-2xl">${severityIcon}</span>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-gray-900 mb-1">${alert.title}</h3>
-                            <p class="text-sm text-gray-600 mb-2">${alert.message}</p>
-                            <div class="flex gap-4 text-xs text-gray-500">
-                                <span>Vaga: ${alert.vaga}</span>
-                                <span>•</span>
-                                <span>${formatDateTime(alert.timestamp)}</span>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between mb-3 items-start">
+                        <div>
+                            <h3 class="font-bold text-gray-900">${employee.nome}</h3>
+                            <div class="flex gap-2 mt-1">
+                                <span class="badge bg-blue-100 text-blue-800">${employee.funcao}</span>
                             </div>
                         </div>
-                        <button onclick="dismissAlert('${alert.id}')" class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
+                        ${currentStatus ? `<span class="badge" style="background:${STATUS_CODES[currentStatus].bg};color:${STATUS_CODES[currentStatus].text}">${STATUS_CODES[currentStatus].label}</span>` : ''}
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2">
+                        ${Object.entries(STATUS_CODES).slice(0, 9).map(([code, info]) => {
+                            const isSelected = currentStatus === code;
+                            // Se selecionado, aplica cor. Se não, branco/cinza padrão.
+                            const style = isSelected 
+                                ? `background:${info.bg}; color:${info.text}; border-color:${info.color}` 
+                                : ``; 
+                            
+                            return `
+                            <button 
+                                onclick="setAttendance('${employee.id}', '${code}')" 
+                                class="status-btn p-2 rounded text-xs font-medium ${isSelected ? 'active' : ''}" 
+                                style="${style}">
+                                ${info.label}
+                            </button>
+                        `}).join('')}
                     </div>
                 </div>
             `;
         }
         
-        function renderSettingsView() {
+        function renderDashboard() {
+            if (!hasGestaoAccess()) return '<div class="p-8 text-center">Acesso Negado</div>';
             return `
-                <main class="p-6 max-w-4xl mx-auto">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <h3 class="font-bold text-gray-900 text-lg mb-4">Regras de Alerta</h3>
-                        <div class="space-y-4">
-                            ${renderRuleForm()}
+                ${renderSidebar()}
+                <div class="main-content min-h-screen bg-gray-50">
+                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+                        <div class="px-4 py-4">
+                            <div class="flex items-center gap-3 mb-4">
+                                <button onclick="toggleSidebar()" class="p-2 md:hidden">☰</button>
+                                <div><h1 class="text-xl font-bold text-gray-900">Dashboard</h1><p class="text-xs text-gray-500">Gestão Profissional</p></div>
+                            </div>
+                            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                                ${[
+                                    { id: 'board', label: 'Quadro Geral', icon: ICONS.clipboard },
+                                    { id: 'charts', label: 'Gráficos', icon: ICONS.chart },
+                                    { id: 'team', label: 'Efetivo', icon: ICONS.users },
+                                    { id: 'history', label: 'Histórico', icon: ICONS.search }
+                                ].map(tab => `
+                                    <button onclick="switchDashboardTab('${tab.id}')" class="px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 border transition-all ${state.dashboardTab === tab.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}">
+                                        ${tab.icon} ${tab.label}
+                                    </button>
+                                `).join('')}
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h3 class="font-bold text-gray-900 text-lg mb-4">Regras Ativas</h3>
-                        <div class="space-y-3">
-                            ${state.rules.length === 0 ? '<p class="text-gray-500 text-center py-8">Nenhuma regra configurada</p>' : state.rules.map(renderRuleItem).join('')}
+                        <div class="px-4 pb-4 border-t border-gray-100 pt-2 bg-gray-50">
+                            <div class="flex flex-wrap gap-2 items-center justify-between">
+                                <div class="flex gap-1">
+                                    <button onclick="setPeriod('7days')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">7D</button>
+                                    <button onclick="setPeriod('30days')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">30D</button>
+                                    <button onclick="setPeriod('thisMonth')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">Mês</button>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <input type="date" value="${state.filters.startDate}" onchange="updateFilter('startDate', this.value)" class="text-xs p-1 border rounded bg-white">
+                                    <span class="text-gray-400">→</span>
+                                    <input type="date" value="${state.filters.endDate}" onchange="updateFilter('endDate', this.value)" class="text-xs p-1 border rounded bg-white">
+                                    <button onclick="applyFilters()" class="p-1 bg-blue-600 text-white rounded text-xs px-2">OK</button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </main>
-            `;
-        }
-        
-        function renderRuleForm() {
-            return `
-                <form onsubmit="handleRuleSubmit(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nome da Regra</label>
-                            <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Condição</label>
-                            <select name="condition" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="parado_mais_que">Parado há mais de</option>
-                                <option value="sem_apropriacao_mais_que">Sem apropriação há mais de</option>
-                                <option value="manutencao_mais_que">Em manutenção há mais de</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tempo (horas)</label>
-                            <input type="number" name="time" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Severidade</label>
-                            <select name="severity" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                                <option value="info">Informação</option>
-                                <option value="warning">Atenção</option>
-                                <option value="critical">Crítico</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                        Adicionar Regra
-                    </button>
-                </form>
-            `;
-        }
-        
-        function renderRuleItem(rule) {
-            return `
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div>
-                        <h4 class="font-semibold text-gray-900">${rule.name}</h4>
-                        <p class="text-sm text-gray-600">${rule.condition} ${rule.time}h - Severidade: ${rule.severity}</p>
-                    </div>
-                    <button onclick="deleteRule('${rule.id}')" class="text-red-500 hover:text-red-700">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
+                    </header>
+                    <main class="p-4 max-w-7xl mx-auto">
+                        ${!state.dashboardData ? `<div class="text-center py-20"><div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div><p class="mt-4 text-gray-500">Carregando...</p></div>` : renderDashboardContent()}
+                    </main>
                 </div>
             `;
         }
-        
-        // ============================================
-        // EVENT HANDLERS
-        // ============================================
-        async function handleRuleSubmit(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const rule = {
-                id: 'RULE-' + Date.now(),
-                name: formData.get('name'),
-                condition: formData.get('condition'),
-                time: parseInt(formData.get('time')),
-                severity: formData.get('severity'),
-                active: true
-            };
-            
-            await saveRule(rule);
-            e.target.reset();
-        }
-        
-        async function deleteRule(id) {
-            if (confirm('Deseja realmente excluir esta regra?')) {
-                // Implement delete logic
-                Toast.success('Regra excluída');
+
+        function renderDashboardContent() {
+            switch(state.dashboardTab) {
+                case 'board': return renderDashboardBoard();
+                case 'charts': return renderDashboardCharts();
+                case 'team': return renderDashboardTeam();
+                case 'history': return renderDashboardHistory();
+                default: return renderDashboardBoard();
             }
         }
-        
-        async function dismissAlert(id) {
-            // Implement dismiss logic
-            state.alerts = state.alerts.filter(a => a.id !== id);
-            render();
-            Toast.info('Alerta dismissado');
+
+        function renderDashboardBoard() {
+            const { fullGrid } = state.dashboardData;
+            const today = getCurrentDate();
+            return `
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden fade-in">
+                    <div class="overflow-x-auto max-h-[75vh]">
+                        <table class="data-table w-full text-sm">
+                            <thead class="bg-blue-800 text-white">
+                                <tr>
+                                    <th class="text-left bg-blue-800 z-20 left-0 sticky">Nome</th>
+                                    <th class="text-left bg-blue-800">Sup.</th>
+                                    ${fullGrid.dates.map(d => `<th class="text-center min-w-[50px] ${d===today?'today-column':''}">${formatDateShort(d)}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${fullGrid.employees.map(e => `
+                                    <tr>
+                                        <td class="sticky left-0 bg-white font-medium text-gray-900 border-r shadow-sm z-10">${e.nome}</td>
+                                        <td class="text-gray-500 text-xs">${e.supervisor}</td>
+                                        ${fullGrid.dates.map(d => {
+                                            const s = fullGrid.records[e.id]?.[d];
+                                            const i = s ? STATUS_CODES[s] : null;
+                                            return `<td class="text-center p-1 ${d===today?'today-column':''}">${i ? `<div class="w-7 h-7 flex items-center justify-center rounded mx-auto font-bold text-xs" style="background:${i.bg};color:${i.text}">${s}</div>` : '<span class="text-gray-200">-</span>'}</td>`;
+                                        }).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         }
-        
+
+        function renderDashboardCharts() {
+            const d = state.dashboardData;
+            const total = Object.values(d.statusTotals).reduce((a,b)=>a+b,0);
+            return `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 fade-in">
+                    <div class="stat-card border-t-4 border-green-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Presença</p>
+                        <p class="text-2xl font-bold text-gray-900">${total?Math.round((d.statusTotals.P/total)*100):0}%</p>
+                    </div>
+                    <div class="stat-card border-t-4 border-red-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Faltas</p>
+                        <p class="text-2xl font-bold text-gray-900">${total?Math.round((d.statusTotals.F/total)*100):0}%</p>
+                    </div>
+                    <div class="stat-card border-t-4 border-yellow-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Atestados</p>
+                        <p class="text-2xl font-bold text-gray-900">${d.statusTotals.AT||0}</p>
+                    </div>
+                    <div class="stat-card border-t-4 border-blue-500">
+                        <p class="text-xs text-gray-500 uppercase font-bold">Total</p>
+                        <p class="text-2xl font-bold text-gray-900">${total}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Evolução</h3><canvas id="trendChart"></canvas></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Status</h3><canvas id="statusChart"></canvas></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Maiores Faltas</h3><canvas id="topIssuesChart"></canvas></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Presença Diária</h3><canvas id="evolutionChart"></canvas></div>
+                </div>
+            `;
+        }
+
+        function renderDashboardTeam() {
+            return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-[500px] fade-in"><h3 class="text-lg font-bold mb-4 text-gray-700">Eficiência por Supervisor</h3><div class="h-full pb-10"><canvas id="teamEffectivenessChart"></canvas></div></div>`;
+        }
+
+        function renderDashboardHistory() {
+            // CORREÇÃO: Input separado para não perder o foco ao digitar
+            return `
+                <div class="fade-in">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 sticky top-0 z-10">
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-400">${ICONS.search}</span>
+                            <input type="text" 
+                                placeholder="Buscar colaborador..." 
+                                value="${state.searchQuery}"
+                                oninput="filterHistoryList(this.value)"
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
+                            >
+                        </div>
+                    </div>
+                    <div id="historyResultsGrid" class="grid gap-4 md:grid-cols-2">
+                        ${generateHistoryCardsHTML(state.searchQuery)}
+                    </div>
+                </div>
+            `;
+        }
+
         // ============================================
-        // INITIALIZATION
+        // INICIALIZAÇÃO
         // ============================================
         window.addEventListener('DOMContentLoaded', () => {
-            if (!CONFIG.API_URL || CONFIG.API_URL.includes('COLE_AQUI')) {
-                Toast.warning('Configure a URL do Apps Script no código');
-                // Mock data for development
-                state.vagas = [
-                    { nome: 'ALTA PRESSÃO - GPS - 01', equipamento: 'EAM3262', status: 'Trabalhando', horario: '16:08:00', ultimaAtualizacao: new Date(), eventos: [] },
-                    { nome: 'ALTA PRESSÃO - GPS - 03', equipamento: 'EGC2989', status: 'Parado', horario: '16:08:00', ultimaAtualizacao: new Date(), eventos: [] },
-                ];
-                state.dashboardData = {
-                    totalVagas: 10,
-                    statusDistribution: { trabalhando: 5, parado: 3, manutencao: 1, 'sem-apropriacao': 1 },
-                    dailyTrend: [],
-                    efficiency: []
-                };
-                state.alerts = [
-                    { id: '1', title: 'Equipamento Parado', message: 'EAM3262 está parado há 2 horas', vaga: 'ALTA PRESSÃO - GPS - 01', severity: 'warning', timestamp: new Date() }
-                ];
-            } else {
-                navigateTo('monitoring');
-            }
-            
-            render();
-            
-            // Auto refresh
-            setInterval(() => {
-                if (state.view === 'monitoring') loadVagas();
-            }, CONFIG.REFRESH_INTERVAL);
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                state.user = JSON.parse(savedUser);
+                window.history.replaceState({ view: 'login' }, '', '');
+                if (hasGestaoAccess()) {
+                    loadDashboard().then(() => { state.view = 'dashboard'; pushNavigation('dashboard'); });
+                } else {
+                    loadEmployees().then(() => {
+                        loadTodayAttendance().then(() => { state.view = 'attendance'; pushNavigation('attendance'); });
+                    });
+                }
+            } else render();
         });
     </script>
 </body>
