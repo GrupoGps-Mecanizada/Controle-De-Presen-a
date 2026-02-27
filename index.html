@@ -1,1147 +1,180 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Gestão de Presença | GPS Mecanizada</title>
-    <meta name="theme-color" content="#1e40af">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- Google Fonts: Inter (Fonte Original mais corporativa) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        * { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            box-sizing: border-box;
-        }
-        
-        body { 
-            -webkit-tap-highlight-color: transparent; 
-            overscroll-behavior-y: none;
-            background: #f8fafc;
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        
-        @keyframes spin { 
-            from { transform: rotate(0deg); } 
-            to { transform: rotate(360deg); } 
-        }
-        
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        .slide-in-right { animation: slideInRight 0.3s ease-out; }
-        .animate-spin { animation: spin 1s linear infinite; }
-        
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 400px;
-        }
-        
-        .toast {
-            background: white;
-            border-radius: 12px;
-            padding: 16px 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideInRight 0.3s ease-out;
-            border-left: 4px solid;
-        }
-        
-        .toast.success { border-color: #10b981; }
-        .toast.error { border-color: #ef4444; }
-        .toast.info { border-color: #3b82f6; }
-        .toast.warning { border-color: #f59e0b; }
-        
-        .toast-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-        
-        .toast.success .toast-icon { background: #dcfce7; color: #16a34a; }
-        .toast.error .toast-icon { background: #fee2e2; color: #dc2626; }
-        .toast.info .toast-icon { background: #dbeafe; color: #2563eb; }
-        .toast.warning .toast-icon { background: #fef3c7; color: #d97706; }
-        
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            width: 280px;
-            background: white;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-        
-        .sidebar.closed { transform: translateX(-100%); }
-        
-        @media (min-width: 768px) {
-            .sidebar { transform: translateX(0) !important; }
-            .main-content { margin-left: 280px; }
-        }
-        
-        /* Status Buttons */
-        .status-btn {
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
-            color: #475569;
-        }
-        
-        .status-btn:hover {
-            border-color: #cbd5e1;
-            background: #f8fafc;
-        }
-        
-        .status-btn.active {
-            transform: scale(1.02);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-width: 0;
-            font-weight: 700;
-        }
-        
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9998;
-        }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        /* Dashboard Cards */
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-        }
-        
-        /* Table */
-        .data-table {
-            font-size: 0.875rem;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        
-        .data-table th {
-            position: sticky;
-            top: 0;
-            background: #1e40af;
-            color: white;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 12px;
-            font-size: 0.75rem;
-            z-index: 10;
-        }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>SCP — Sistema de Controle de Presença</title>
+    <meta name="theme-color" content="#1e40af" />
+    <meta name="description" content="Sistema de Controle de Presença — GPS Mecanizada" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
 
-        /* TODAY COLUMN HIGHLIGHT */
-        .data-table th.today-column {
-            background: #dc2626 !important;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 11;
-        }
-
-        .data-table td.today-column {
-            background: #fff5f5;
-            border-left: 1px solid #fee2e2;
-            border-right: 1px solid #fee2e2;
-            font-weight: 600;
-        }
-        
-        .data-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        /* Save Button States */
-        .save-btn.saving::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 1.5s infinite;
-        }
-        
-        @keyframes shimmer {
-            to { left: 100%; }
-        }
-        
-        /* Badge */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.70rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-    </style>
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="css/topbar.css" />
+    <link rel="stylesheet" href="css/attendance.css" />
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/toast.css" />
+    <link rel="stylesheet" href="css/modal.css" />
 </head>
+
 <body>
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-    
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="bg-white rounded-xl p-8 text-center shadow-2xl">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="text-gray-700 font-semibold">Carregando...</p>
+    <!-- ==================== LOGIN SCREEN ==================== -->
+    <div id="login-screen" class="hidden">
+        <canvas id="bg-canvas"></canvas>
+        <div id="vignette"></div>
+
+        <div class="login-box" style="z-index: 10; position: relative;">
+            <div class="login-header">
+                <div class="login-icon">
+                    <svg fill="none" stroke="#1e40af" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h1>Controle de Presença</h1>
+                <p>GPS Mecanizada — Gestão Profissional</p>
+            </div>
+
+            <form id="login-form">
+                <div class="login-input-group" id="group-name" style="display: none;">
+                    <label>Nome</label>
+                    <input type="text" id="login-name" autocomplete="name" />
+                </div>
+                <div class="login-input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="login-user" required autocomplete="username" />
+                </div>
+                <div class="login-input-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-pass" required autocomplete="current-password" />
+                </div>
+                <button type="submit" class="login-btn" id="login-submit">Entrar</button>
+                <div style="text-align: center; margin-top: 12px; font-size: 13px;">
+                    <a href="#" id="toggle-register"
+                        style="color: var(--accent); text-decoration: none; font-weight: 600;">Criar uma conta</a>
+                </div>
+            </form>
+            <div class="login-error" id="login-error"></div>
         </div>
+
+        <div class="login-footer">Desenvolvido por Warlison Abreu</div>
     </div>
-    
-    <!-- App Container -->
-    <div id="app"></div>
 
-    <script>
-        // ============================================
-        // ÍCONES SVG (CORPORATIVO/ORIGINAL)
-        // ============================================
-        const ICONS = {
-            login: '<svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-            dashboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>',
-            clipboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>',
-            logout: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>',
-            db: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>',
-            clock: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
-            search: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>',
-            chart: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>',
-            users: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>'
-        };
+    <div id="app">
 
-        // ============================================
-        // CONFIGURAÇÃO
-        // ============================================
-        const CONFIG = {
-            API_URL: 'https://script.google.com/macros/s/AKfycbwLMuYsivgWYtbQ7bjfIcc10CuoKuSjEe3ubrLJG2MoL1_tnfA9kkkufKcNCTPB6cmtDA/exec',
-            CACHE_DURATION: 5 * 60 * 1000,
-            TOAST_DURATION: 4000
-        };
-        
-        // ============================================
-        // STATUS CODES
-        // ============================================
-        const STATUS_CODES = {
-            'P': { label: 'Presente', color: '#10b981', bg: '#d1fae5', text: '#065f46' },
-            'F': { label: 'Falta', color: '#ef4444', bg: '#fee2e2', text: '#991b1b' },
-            'FE': { label: 'Férias', color: '#f59e0b', bg: '#fef3c7', text: '#92400e' },
-            'TR': { label: 'Treinamento', color: '#3b82f6', bg: '#dbeafe', text: '#1e40af' },
-            'AF': { label: 'Afastado', color: '#6b7280', bg: '#e5e7eb', text: '#374151' },
-            'AT': { label: 'Atestado', color: '#f97316', bg: '#fed7aa', text: '#9a3412' },
-            'FO': { label: 'Folga', color: '#8b5cf6', bg: '#ede9fe', text: '#5b21b6' },
-            'EX': { label: 'Extra', color: '#14b8a6', bg: '#ccfbf1', text: '#115e59' },
-            'TH': { label: 'Troca de Horário', color: '#ec4899', bg: '#fce7f3', text: '#9f1239' },
-            'TE': { label: 'Troca de Escala', color: '#06b6d4', bg: '#cffafe', text: '#164e63' },
-            'DS': { label: 'Desligado', color: '#64748b', bg: '#f1f5f9', text: '#1e293b' }
-        };
-        
-        const ACCESS_LEVELS = {
-            SUPERVISOR: 'supervisor',
-            GESTAO: 'gestao'
-        };
-        
-        // ============================================
-        // ESTADO GLOBAL
-        // ============================================
-        let state = {
-            view: 'login',
-            user: null,
-            employees: [],
-            selectedDate: getCurrentDate(),
-            attendanceRecords: {},
-            isLoading: false,
-            dashboardData: null,
-            sidebarOpen: window.innerWidth >= 768,
-            filters: {
-                startDate: getMonthStart(),
-                endDate: getCurrentDate(),
-                period: '30days'
-            },
-            charts: {},
-            saveState: 'idle',
-            navigationStack: [],
-            dashboardTab: 'board', 
-            searchQuery: '' 
-        };
-        
-        // ============================================
-        // NAVEGAÇÃO ANDROID
-        // ============================================
-        function pushNavigation(view, data = {}) {
-            state.navigationStack.push({ 
-                view: state.view, 
-                dashboardTab: state.dashboardTab 
-            });
-            window.history.pushState({ view }, '', '');
-            navigateTo(view);
-        }
-
-        function handleBackButton(event) {
-            if (state.navigationStack.length > 0) {
-                if(event) event.preventDefault();
-                const previous = state.navigationStack.pop();
-                
-                if (previous.view === 'dashboard') {
-                    state.dashboardTab = previous.dashboardTab || 'board';
-                    state.view = 'dashboard';
-                } else {
-                    state.view = previous.view;
-                }
-                render();
-                return true;
-            }
-            return false;
-        }
-
-        window.addEventListener('popstate', (e) => {
-            handleBackButton(e);
-        });
-
-        // ============================================
-        // CACHE SYSTEM
-        // ============================================
-        const Cache = {
-            set(key, data) {
-                try {
-                    const item = { data: data, timestamp: Date.now() };
-                    localStorage.setItem(`cache_${key}`, JSON.stringify(item));
-                } catch (e) { console.warn('Cache set failed:', e); }
-            },
-            get(key) {
-                try {
-                    const item = localStorage.getItem(`cache_${key}`);
-                    if (!item) return null;
-                    const parsed = JSON.parse(item);
-                    if (Date.now() - parsed.timestamp > CONFIG.CACHE_DURATION) {
-                        localStorage.removeItem(`cache_${key}`);
-                        return null;
-                    }
-                    return parsed.data;
-                } catch (e) { return null; }
-            },
-            clear(pattern) {
-                try {
-                    Object.keys(localStorage).forEach(key => {
-                        if (key.startsWith(pattern ? `cache_${pattern}` : 'cache_')) {
-                            localStorage.removeItem(key);
-                        }
-                    });
-                } catch (e) {}
-            }
-        };
-        
-        // ============================================
-        // TOAST SYSTEM
-        // ============================================
-        const Toast = {
-            show(message, type = 'info') {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                const icons = { success: '✓', error: '✕', info: 'i', warning: '!' };
-                toast.innerHTML = `<div class="toast-icon">${icons[type]}</div><div class="flex-1"><p class="text-sm font-semibold text-gray-900">${message}</p></div>`;
-                container.appendChild(toast);
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(20px)';
-                    setTimeout(() => toast.remove(), 300);
-                }, CONFIG.TOAST_DURATION);
-            },
-            success(m) { this.show(m, 'success'); },
-            error(m) { this.show(m, 'error'); },
-            info(m) { this.show(m, 'info'); },
-            warning(m) { this.show(m, 'warning'); }
-        };
-        
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
-        function getCurrentDate() { return new Date().toISOString().split('T')[0]; }
-        function getMonthStart() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; }
-        function formatDate(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
-        function formatDateShort(d) { return new Date(d+'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }); }
-        function getPreviousDay(d) { const D = new Date(d+'T00:00:00'); D.setDate(D.getDate()-1); return D.toISOString().split('T')[0]; }
-        function getNextDay(d) { const D = new Date(d+'T00:00:00'); D.setDate(D.getDate()+1); return D.toISOString().split('T')[0]; }
-        function hasGestaoAccess() { return state.user && state.user.accessLevel === ACCESS_LEVELS.GESTAO; }
-        function showLoading(show = true) { document.getElementById('loadingOverlay').classList.toggle('hidden', !show); }
-        
-        // ============================================
-        // API CALLS
-        // ============================================
-        async function apiCall(endpoint, options = {}) {
-            try {
-                const response = await fetch(endpoint, options);
-                return await response.json();
-            } catch (error) {
-                Toast.error('Erro de conexão');
-                return { success: false, error: error.message };
-            }
-        }
-        
-        async function login(u, p) { return await apiCall(`${CONFIG.API_URL}?action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`); }
-        
-        async function getEmployees(sup) {
-            const k = `employees_${sup}`;
-            const c = Cache.get(k); if(c) return c;
-            const r = await apiCall(`${CONFIG.API_URL}?action=getEmployees&supervisor=${encodeURIComponent(sup)}`);
-            if(r.success) Cache.set(k, r);
-            return r;
-        }
-        
-        async function getTodayAttendance(sup, date) {
-            const k = `attendance_${sup}_${date}`;
-            const c = Cache.get(k); if(c) return c;
-            const r = await apiCall(`${CONFIG.API_URL}?action=getAttendance&supervisor=${encodeURIComponent(sup)}&date=${date}`);
-            if(r.success) Cache.set(k, r);
-            return r;
-        }
-        
-        async function saveMultipleAttendance(records) {
-            const r = await apiCall(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: 'saveMultipleAttendance', records }) });
-            Cache.clear('attendance_'); Cache.clear('dashboard_');
-            return r;
-        }
-        
-        async function getDashboardData(start, end) {
-            const k = `dashboard_${start}_${end}`;
-            const c = Cache.get(k); if(c) return c;
-            const r = await apiCall(`${CONFIG.API_URL}?action=getDashboard&startDate=${start}&endDate=${end}&supervisor=all`);
-            if(r.success) Cache.set(k, r);
-            return r;
-        }
-        
-        // ============================================
-        // BUSINESS LOGIC
-        // ============================================
-        async function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            if (!u || !p) { Toast.warning('Preencha todos os campos'); return; }
-            
-            showLoading(true);
-            const r = await login(u, p);
-            showLoading(false);
-            
-            if (r.success) {
-                state.user = r.supervisor;
-                localStorage.setItem('user', JSON.stringify(r.supervisor));
-                window.history.pushState({ view: 'login' }, '', '');
-                Toast.success(`Bem-vindo, ${r.supervisor.nome}!`);
-                
-                if (hasGestaoAccess()) {
-                    await loadDashboard();
-                    state.view = 'dashboard';
-                } else {
-                    await loadEmployees();
-                    await loadTodayAttendance();
-                    state.view = 'attendance';
-                }
-                render();
-            } else {
-                Toast.error(r.error || 'Credenciais inválidas');
-            }
-        }
-        
-        async function loadEmployees() {
-            const r = await getEmployees(state.user.nome);
-            if (r.success) state.employees = r.employees;
-        }
-        
-        async function loadTodayAttendance() {
-            const r = await getTodayAttendance(state.user.nome, state.selectedDate);
-            if (r.success) {
-                state.attendanceRecords = {};
-                r.records.forEach(rec => state.attendanceRecords[rec.employeeId] = rec.status);
-            }
-        }
-        
-        function setAttendance(empId, status) {
-            state.attendanceRecords[empId] = status;
-            render(); // Re-render to show selection color
-            Toast.info('Selecionado: ' + STATUS_CODES[status].label);
-        }
-        
-        async function saveAllAttendance() {
-            const records = [];
-            for (const id in state.attendanceRecords) {
-                const emp = state.employees.find(e => e.id === id);
-                if (emp) records.push({
-                    date: state.selectedDate,
-                    employeeId: emp.id,
-                    employeeName: emp.nome,
-                    function: emp.funcao,
-                    regime: emp.regime,
-                    supervisor: state.user.nome,
-                    status: state.attendanceRecords[id],
-                    observations: ''
-                });
-            }
-            
-            if (!records.length) { Toast.warning('Nada a salvar'); return; }
-            
-            state.saveState = 'saving';
-            render();
-            
-            const r = await saveMultipleAttendance(records);
-            
-            if (r.success) {
-                state.saveState = 'success';
-                Toast.success('Salvo com sucesso!');
-            } else {
-                state.saveState = 'error';
-                Toast.error('Erro: ' + r.error);
-            }
-            
-            setTimeout(() => { state.saveState = 'idle'; render(); }, 2000);
-        }
-        
-        function handleLogout() {
-            localStorage.removeItem('user');
-            Cache.clear();
-            state = {
-                view: 'login',
-                user: null,
-                employees: [],
-                selectedDate: getCurrentDate(),
-                attendanceRecords: {},
-                isLoading: false,
-                dashboardData: null,
-                sidebarOpen: false,
-                filters: { startDate: getMonthStart(), endDate: getCurrentDate(), period: '30days' },
-                charts: {},
-                saveState: 'idle',
-                navigationStack: [],
-                dashboardTab: 'board',
-                searchQuery: ''
-            };
-            destroyAllCharts();
-            render();
-        }
-        
-        async function changeDate(d) {
-            state.selectedDate = d;
-            showLoading(true);
-            await loadTodayAttendance();
-            showLoading(false);
-            render();
-        }
-        
-        async function loadDashboard() {
-            showLoading(true);
-            const r = await getDashboardData(state.filters.startDate, state.filters.endDate);
-            if (r.success) state.dashboardData = r.data;
-            showLoading(false);
-            render();
-            if (state.dashboardTab === 'charts') setTimeout(renderCharts, 100);
-        }
-        
-        function toggleSidebar() { state.sidebarOpen = !state.sidebarOpen; render(); }
-        
-        async function navigateTo(view) {
-            state.sidebarOpen = window.innerWidth >= 768;
-            if (view === 'dashboard' && hasGestaoAccess()) await loadDashboard();
-            else if (view === 'attendance') {
-                if (!state.employees.length) await loadEmployees();
-                await loadTodayAttendance();
-            }
-            state.view = view;
-            render();
-        }
-
-        function switchDashboardTab(tab) {
-            state.dashboardTab = tab;
-            render();
-            if (tab === 'charts' || tab === 'team') setTimeout(renderCharts, 100);
-            if (tab === 'board') setTimeout(scrollToToday, 100);
-        }
-        
-        async function applyFilters() { await loadDashboard(); }
-        
-        function updateFilter(k, v) {
-            state.filters[k] = v;
-            if (k === 'startDate' || k === 'endDate') state.filters.period = 'custom';
-        }
-        
-        function setPeriod(p) {
-            const today = new Date();
-            let start;
-            if (p==='7days') start = new Date(today.setDate(today.getDate()-7));
-            else if (p==='30days') start = new Date(today.setDate(today.getDate()-30));
-            else if (p==='thisMonth') start = new Date(today.getFullYear(), today.getMonth(), 1);
-            
-            state.filters.startDate = start.toISOString().split('T')[0];
-            state.filters.endDate = getCurrentDate();
-            state.filters.period = p;
-            applyFilters();
-        }
-
-        function scrollToToday() {
-            const el = document.querySelector('.today-column');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-        
-        // ============================================
-        // CHARTS
-        // ============================================
-        function destroyAllCharts() { Object.values(state.charts).forEach(c => c && c.destroy()); state.charts = {}; }
-        
-        function renderCharts() {
-            if (!state.dashboardData) return;
-            destroyAllCharts();
-            if (state.dashboardTab === 'charts') {
-                renderTrendChart();
-                renderStatusDistributionChart();
-                renderTopIssuesChart();
-                renderDailyEvolutionChart();
-            } else if (state.dashboardTab === 'team') {
-                renderTeamEffectivenessChart();
-            }
-        }
-        
-        function renderTrendChart() {
-            const ctx = document.getElementById('trendChart')?.getContext('2d');
-            if (!ctx) return;
-            const daily = state.dashboardData.dailyStats;
-            state.charts.trend = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: daily.map(i => formatDateShort(i.date)),
-                    datasets: [
-                        { label: 'Presentes', data: daily.map(i => i.P||0), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 },
-                        { label: 'Faltas', data: daily.map(i => i.F||0), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
-            });
-        }
-        
-        function renderStatusDistributionChart() {
-            const ctx = document.getElementById('statusChart')?.getContext('2d');
-            if (!ctx) return;
-            const stats = Object.entries(state.dashboardData.statusTotals).filter(([,c])=>c>0).sort((a,b)=>b[1]-a[1]);
-            state.charts.status = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: stats.map(([c]) => STATUS_CODES[c]?.label || c),
-                    datasets: [{
-                        data: stats.map(([,c]) => c),
-                        backgroundColor: stats.map(([c]) => STATUS_CODES[c]?.color || '#ccc'),
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-            });
-        }
-        
-        function renderTopIssuesChart() {
-            const ctx = document.getElementById('topIssuesChart')?.getContext('2d');
-            if (!ctx) return;
-            state.charts.topIssues = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: state.dashboardData.topFaltas.slice(0, 10).map(i => i.name.split(' ').slice(0,2).join(' ')),
-                    datasets: [{ label: 'Faltas', data: state.dashboardData.topFaltas.slice(0, 10).map(i => i.count), backgroundColor: '#ef4444', borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
-            });
-        }
-        
-        function renderDailyEvolutionChart() {
-            const ctx = document.getElementById('evolutionChart')?.getContext('2d');
-            if (!ctx) return;
-            const rates = state.dashboardData.dailyStats.map(i => {
-                const t = Object.values(i).reduce((s,v)=> (typeof v==='number'&&v!==i.date)?s+v:s, 0);
-                return t>0 ? Math.round((i.P||0)/t*100) : 0;
-            });
-            state.charts.evolution = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: state.dashboardData.dailyStats.map(i => formatDateShort(i.date)),
-                    datasets: [{ label: 'Taxa (%)', data: rates, backgroundColor: rates.map(r => r>=95?'#10b981':r>=85?'#f59e0b':'#ef4444'), borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { max: 100 } } }
-            });
-        }
-
-        function renderTeamEffectivenessChart() {
-            const ctx = document.getElementById('teamEffectivenessChart')?.getContext('2d');
-            if (!ctx) return;
-            const supStats = {};
-            const { employees, records, dates } = state.dashboardData.fullGrid;
-            employees.forEach(e => {
-                if(!supStats[e.supervisor]) supStats[e.supervisor] = {t:0, p:0};
-                dates.forEach(d => {
-                    const s = records[e.id]?.[d];
-                    if(s) { supStats[e.supervisor].t++; if(s==='P') supStats[e.supervisor].p++; }
-                });
-            });
-            const labels = Object.keys(supStats);
-            const data = labels.map(s => supStats[s].t>0 ? Math.round((supStats[s].p/supStats[s].t)*100) : 0);
-            state.charts.team = new Chart(ctx, {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Eficiência (%)', data, backgroundColor: '#3b82f6', borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { max: 100 } } }
-            });
-        }
-        
-        // ============================================
-        // SEARCH FILTER LOGIC (BUG FIX)
-        // ============================================
-        // Esta função atualiza apenas a lista, sem destruir o input
-        function filterHistoryList(query) {
-            state.searchQuery = query;
-            const grid = document.getElementById('historyResultsGrid');
-            if(grid) {
-                grid.innerHTML = generateHistoryCardsHTML(query);
-            }
-        }
-
-        function generateHistoryCardsHTML(query) {
-            const employees = state.dashboardData.fullGrid.employees;
-            const records = state.dashboardData.fullGrid.records;
-            const dates = state.dashboardData.fullGrid.dates;
-            const q = query.toLowerCase();
-            
-            const filtered = employees.filter(e => e.nome.toLowerCase().includes(q));
-
-            if(filtered.length === 0) return '<p class="text-gray-500 text-center col-span-2 py-8">Nenhum resultado encontrado.</p>';
-
-            return filtered.slice(0, 50).map(emp => {
-                let stats = { P:0, F:0, AT:0 };
-                let history = [];
-                dates.forEach(d => {
-                    const s = records[emp.id]?.[d];
-                    if(s) {
-                        if(stats[s] !== undefined) stats[s]++;
-                        history.push({date: d, status: s});
-                    }
-                });
-                const total = stats.P + stats.F + stats.AT; 
-                const rate = total > 0 ? Math.round((stats.P/total)*100) : 0;
-
-                return `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-bold text-gray-900">${emp.nome}</h4>
-                                <p class="text-xs text-gray-500">${emp.supervisor} | ${emp.funcao}</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xl font-bold ${stats.F > 2 ? 'text-red-500' : 'text-green-500'}">
-                                    ${rate}%
-                                </span>
-                                <p class="text-[10px] text-gray-400">Presença</p>
-                            </div>
-                        </div>
-                        <div class="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                            ${history.reverse().slice(0, 10).map(h => `
-                                <div class="flex flex-col items-center min-w-[30px]">
-                                    <span class="text-[10px] text-gray-400">${formatDateShort(h.date)}</span>
-                                    <span class="text-xs font-bold" style="color:${STATUS_CODES[h.status]?.color}">${h.status}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // ============================================
-        // RENDER FUNCTIONS
-        // ============================================
-        function render() {
-            const app = document.getElementById('app');
-            switch(state.view) {
-                case 'login': app.innerHTML = renderLogin(); break;
-                case 'attendance': app.innerHTML = renderAttendance(); break;
-                case 'dashboard': app.innerHTML = renderDashboard(); break;
-            }
-        }
-        
-        function renderLogin() {
-            return `
-                <div class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-600 to-blue-800">
-                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden fade-in">
-                        <div class="bg-blue-600 p-8 text-center">
-                            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                                ${ICONS.login}
-                            </div>
-                            <h1 class="text-3xl font-bold text-white mb-2">Sistema de Presença</h1>
-                            <p class="text-blue-100 text-sm font-medium">GPS Mecanizada - Gestão Profissional</p>
-                        </div>
-                        <form onsubmit="handleLogin(event)" class="p-8 space-y-6">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Usuário</label>
-                                <input type="text" id="username" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
-                                <input type="password" id="password" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" required>
-                            </div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition-all">Entrar</button>
-                        </form>
-                        <div class="px-8 pb-8 text-center text-xs text-gray-400"><p>© 2026 GPS Mecanizada</p></div>
-                    </div>
+        <!-- ==================== LOADING SCREEN ==================== -->
+        <div id="loading-screen" style="background:var(--bg-0)">
+            <div class="loading-content">
+                <div class="loading-bar-container">
+                    <div class="loading-bar"></div>
                 </div>
-            `;
-        }
-        
-        function renderSidebar() {
-            const isGestao = hasGestaoAccess();
-            const extraLinks = isGestao ? [
-                { label: 'Banco de Dados', url: 'https://docs.google.com/spreadsheets/d/1XMMLkcLQrDhD96aYOiWNTHkaOz2Qn7f99ADCv9e5WMY/edit', icon: ICONS.db }
-            ] : [
-                { label: 'Classificar Horas', url: 'https://grupogps-mecanizada.github.io/CLASSIFICAR-HORAS/', icon: ICONS.clock }
-            ];
+                <div id="loading-status"
+                    style="color:var(--text-3); font-size:12px; font-weight:500; margin-top:14px; text-align:center; letter-spacing:0.02em;">
+                    Conectando...</div>
+            </div>
+        </div>
 
-            const menuItems = isGestao ? [
-                { label: 'Dashboard', view: 'dashboard', icon: ICONS.dashboard },
-                { label: 'Marcação de Presença', view: 'attendance', icon: ICONS.clipboard }
-            ] : [
-                { label: 'Marcação de Presença', view: 'attendance', icon: ICONS.clipboard }
-            ];
-            
-            return `
-                ${state.sidebarOpen && window.innerWidth < 768 ? '<div class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onclick="toggleSidebar()"></div>' : ''}
-                <aside class="sidebar ${state.sidebarOpen ? '' : 'closed'}">
-                    <div class="bg-blue-800 text-white p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
-                                    ${state.user.nome.charAt(0)}
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="font-bold text-sm truncate">${state.user.nome}</h3>
-                                    <p class="text-xs opacity-70">${isGestao ? 'Gestão' : 'Supervisor'}</p>
-                                </div>
-                            </div>
-                            <button onclick="toggleSidebar()" class="p-2 hover:bg-white/20 rounded-lg md:hidden">✕</button>
-                        </div>
-                    </div>
-                    <nav class="p-4 flex-1 overflow-y-auto space-y-1">
-                        ${menuItems.map(item => `
-                            <button onclick="pushNavigation('${item.view}')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${state.view === item.view ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}">
-                                ${item.icon}<span>${item.label}</span>
-                            </button>
-                        `).join('')}
-                        <div class="border-t border-gray-200 my-4"></div>
-                        ${extraLinks.map(link => `
-                            <a href="${link.url}" target="_blank" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-gray-600 hover:bg-gray-50">
-                                ${link.icon}<span>${link.label}</span>
-                            </a>
-                        `).join('')}
-                        <div class="border-t border-gray-200 my-4"></div>
-                        <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-red-600 hover:bg-red-50">
-                            ${ICONS.logout}<span>Sair</span>
-                        </button>
-                    </nav>
-                </aside>
-            `;
-        }
-        
-        function renderAttendance() {
-            const total = state.employees.length;
-            const marked = Object.keys(state.attendanceRecords).length;
-            const progress = total > 0 ? Math.round((marked / total) * 100) : 0;
-            const btn = {
-                idle: { text: `Salvar ${marked} Registros`, disabled: marked === 0, class: 'bg-green-600 hover:bg-green-700' },
-                saving: { text: 'Salvando...', disabled: true, class: 'bg-green-600 save-btn saving' },
-                success: { text: '✓ Salvo', disabled: true, class: 'bg-green-500' },
-                error: { text: '✕ Erro', disabled: true, class: 'bg-red-500' }
-            }[state.saveState];
-            
-            return `
-                ${renderSidebar()}
-                <div class="main-content min-h-screen bg-gray-50 pb-24">
-                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-                        <div class="px-4 py-4">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg md:hidden">☰</button>
-                                    <div>
-                                        <h1 class="text-lg font-bold text-gray-900">Marcação de Presença</h1>
-                                        <p class="text-sm text-gray-500">${state.user.nome}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-gray-50 rounded-lg p-2 border border-gray-200 flex items-center justify-between">
-                                <button onclick="changeDate('${getPreviousDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded shadow-sm">◀</button>
-                                <div class="text-center">
-                                    <input type="date" value="${state.selectedDate}" onchange="changeDate(this.value)" class="bg-transparent text-center font-bold outline-none text-gray-900">
-                                    <p class="text-xs text-gray-500">${formatDate(state.selectedDate)}</p>
-                                </div>
-                                <button onclick="changeDate('${getNextDay(state.selectedDate)}')" class="p-2 hover:bg-white rounded shadow-sm">▶</button>
-                            </div>
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs font-semibold text-gray-600 mb-1"><span>Progresso</span><span>${progress}%</span></div>
-                                <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div></div>
-                            </div>
-                        </div>
-                    </header>
-                    <main class="p-4 max-w-6xl mx-auto">
-                        ${state.employees.length === 0 ? '<div class="text-center py-10 text-gray-500">Nenhum colaborador</div>' : 
-                          `<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">${state.employees.map(emp => renderEmployeeCard(emp)).join('')}</div>`}
-                    </main>
-                    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 md:left-[280px]">
-                        <button onclick="saveAllAttendance()" ${btn.disabled ? 'disabled' : ''} class="w-full max-w-4xl mx-auto block ${btn.class} text-white font-bold py-3 rounded-lg shadow transition-all">
-                            ${btn.text}
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderEmployeeCard(employee) {
-            const currentStatus = state.attendanceRecords[employee.id];
-            
-            return `
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                    <div class="flex justify-between mb-3 items-start">
-                        <div>
-                            <h3 class="font-bold text-gray-900">${employee.nome}</h3>
-                            <div class="flex gap-2 mt-1">
-                                <span class="badge bg-blue-100 text-blue-800">${employee.funcao}</span>
-                            </div>
-                        </div>
-                        ${currentStatus ? `<span class="badge" style="background:${STATUS_CODES[currentStatus].bg};color:${STATUS_CODES[currentStatus].text}">${STATUS_CODES[currentStatus].label}</span>` : ''}
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-2">
-                        ${Object.entries(STATUS_CODES).slice(0, 9).map(([code, info]) => {
-                            const isSelected = currentStatus === code;
-                            // Se selecionado, aplica cor. Se não, branco/cinza padrão.
-                            const style = isSelected 
-                                ? `background:${info.bg}; color:${info.text}; border-color:${info.color}` 
-                                : ``; 
-                            
-                            return `
-                            <button 
-                                onclick="setAttendance('${employee.id}', '${code}')" 
-                                class="status-btn p-2 rounded text-xs font-medium ${isSelected ? 'active' : ''}" 
-                                style="${style}">
-                                ${info.label}
-                            </button>
-                        `}).join('')}
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderDashboard() {
-            if (!hasGestaoAccess()) return '<div class="p-8 text-center">Acesso Negado</div>';
-            return `
-                ${renderSidebar()}
-                <div class="main-content min-h-screen bg-gray-50">
-                    <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-                        <div class="px-4 py-4">
-                            <div class="flex items-center gap-3 mb-4">
-                                <button onclick="toggleSidebar()" class="p-2 md:hidden">☰</button>
-                                <div><h1 class="text-xl font-bold text-gray-900">Dashboard</h1><p class="text-xs text-gray-500">Gestão Profissional</p></div>
-                            </div>
-                            <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                                ${[
-                                    { id: 'board', label: 'Quadro Geral', icon: ICONS.clipboard },
-                                    { id: 'charts', label: 'Gráficos', icon: ICONS.chart },
-                                    { id: 'team', label: 'Efetivo', icon: ICONS.users },
-                                    { id: 'history', label: 'Histórico', icon: ICONS.search }
-                                ].map(tab => `
-                                    <button onclick="switchDashboardTab('${tab.id}')" class="px-4 py-2 rounded-lg font-medium whitespace-nowrap flex items-center gap-2 border transition-all ${state.dashboardTab === tab.id ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}">
-                                        ${tab.icon} ${tab.label}
-                                    </button>
-                                `).join('')}
-                            </div>
-                        </div>
-                        <div class="px-4 pb-4 border-t border-gray-100 pt-2 bg-gray-50">
-                            <div class="flex flex-wrap gap-2 items-center justify-between">
-                                <div class="flex gap-1">
-                                    <button onclick="setPeriod('7days')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">7D</button>
-                                    <button onclick="setPeriod('30days')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">30D</button>
-                                    <button onclick="setPeriod('thisMonth')" class="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50">Mês</button>
-                                </div>
-                                <div class="flex gap-2 items-center">
-                                    <input type="date" value="${state.filters.startDate}" onchange="updateFilter('startDate', this.value)" class="text-xs p-1 border rounded bg-white">
-                                    <span class="text-gray-400">→</span>
-                                    <input type="date" value="${state.filters.endDate}" onchange="updateFilter('endDate', this.value)" class="text-xs p-1 border rounded bg-white">
-                                    <button onclick="applyFilters()" class="p-1 bg-blue-600 text-white rounded text-xs px-2">OK</button>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-                    <main class="p-4 max-w-7xl mx-auto">
-                        ${!state.dashboardData ? `<div class="text-center py-20"><div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div><p class="mt-4 text-gray-500">Carregando...</p></div>` : renderDashboardContent()}
-                    </main>
-                </div>
-            `;
-        }
+        <!-- ==================== SYNC BAR ==================== -->
+        <div id="global-sync-bar"></div>
 
-        function renderDashboardContent() {
-            switch(state.dashboardTab) {
-                case 'board': return renderDashboardBoard();
-                case 'charts': return renderDashboardCharts();
-                case 'team': return renderDashboardTeam();
-                case 'history': return renderDashboardHistory();
-                default: return renderDashboardBoard();
-            }
-        }
+        <!-- ==================== TOPBAR ==================== -->
+        <div id="topbar">
+            <div class="logo" id="logo-home" title="Voltar ao Início">
+                <span>Grupo GPS</span>
+                <span>Mecanizada</span>
+                <span>Controle De Presença</span>
+            </div>
 
-        function renderDashboardBoard() {
-            const { fullGrid } = state.dashboardData;
-            const today = getCurrentDate();
-            return `
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden fade-in">
-                    <div class="overflow-x-auto max-h-[75vh]">
-                        <table class="data-table w-full text-sm">
-                            <thead class="bg-blue-800 text-white">
-                                <tr>
-                                    <th class="text-left bg-blue-800 z-20 left-0 sticky">Nome</th>
-                                    <th class="text-left bg-blue-800">Sup.</th>
-                                    ${fullGrid.dates.map(d => `<th class="text-center min-w-[50px] ${d===today?'today-column':''}">${formatDateShort(d)}</th>`).join('')}
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                ${fullGrid.employees.map(e => `
-                                    <tr>
-                                        <td class="sticky left-0 bg-white font-medium text-gray-900 border-r shadow-sm z-10">${e.nome}</td>
-                                        <td class="text-gray-500 text-xs">${e.supervisor}</td>
-                                        ${fullGrid.dates.map(d => {
-                                            const s = fullGrid.records[e.id]?.[d];
-                                            const i = s ? STATUS_CODES[s] : null;
-                                            return `<td class="text-center p-1 ${d===today?'today-column':''}">${i ? `<div class="w-7 h-7 flex items-center justify-center rounded mx-auto font-bold text-xs" style="background:${i.bg};color:${i.text}">${s}</div>` : '<span class="text-gray-200">-</span>'}</td>`;
-                                        }).join('')}
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
+            <!-- Hamburger Button (Mobile Only) -->
+            <button id="mobile-menu-btn" aria-label="Abrir Menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
 
-        function renderDashboardCharts() {
-            const d = state.dashboardData;
-            const total = Object.values(d.statusTotals).reduce((a,b)=>a+b,0);
-            return `
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 fade-in">
-                    <div class="stat-card border-t-4 border-green-500">
-                        <p class="text-xs text-gray-500 uppercase font-bold">Presença</p>
-                        <p class="text-2xl font-bold text-gray-900">${total?Math.round((d.statusTotals.P/total)*100):0}%</p>
-                    </div>
-                    <div class="stat-card border-t-4 border-red-500">
-                        <p class="text-xs text-gray-500 uppercase font-bold">Faltas</p>
-                        <p class="text-2xl font-bold text-gray-900">${total?Math.round((d.statusTotals.F/total)*100):0}%</p>
-                    </div>
-                    <div class="stat-card border-t-4 border-yellow-500">
-                        <p class="text-xs text-gray-500 uppercase font-bold">Atestados</p>
-                        <p class="text-2xl font-bold text-gray-900">${d.statusTotals.AT||0}</p>
-                    </div>
-                    <div class="stat-card border-t-4 border-blue-500">
-                        <p class="text-xs text-gray-500 uppercase font-bold">Total</p>
-                        <p class="text-2xl font-bold text-gray-900">${total}</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Evolução</h3><canvas id="trendChart"></canvas></div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Status</h3><canvas id="statusChart"></canvas></div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Maiores Faltas</h3><canvas id="topIssuesChart"></canvas></div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-80"><h3 class="font-bold mb-4 text-gray-700">Presença Diária</h3><canvas id="evolutionChart"></canvas></div>
-                </div>
-            `;
-        }
+            <div id="nav" class="nav-items">
+                <button class="nav-btn" data-view="attendance">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path
+                            d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h0a2 2 0 002-2M9 5a2 2 0 012-2h0a2 2 0 012 2" />
+                    </svg>
+                    Presença
+                </button>
+                <button class="nav-btn" data-view="dashboard">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="1" y="1" width="5" height="7" rx="1" />
+                        <rect x="1" y="10" width="5" height="5" rx="1" />
+                        <rect x="8" y="1" width="7" height="5" rx="1" />
+                        <rect x="8" y="8" width="7" height="7" rx="1" />
+                    </svg>
+                    Dashboard
+                </button>
+            </div>
 
-        function renderDashboardTeam() {
-            return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-[500px] fade-in"><h3 class="text-lg font-bold mb-4 text-gray-700">Eficiência por Supervisor</h3><div class="h-full pb-10"><canvas id="teamEffectivenessChart"></canvas></div></div>`;
-        }
+            <div id="topbar-right">
+                <!-- Injected by auth.js -->
+                <div id="topbar-user"></div>
 
-        function renderDashboardHistory() {
-            // CORREÇÃO: Input separado para não perder o foco ao digitar
-            return `
-                <div class="fade-in">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 sticky top-0 z-10">
-                        <div class="relative">
-                            <span class="absolute left-3 top-3 text-gray-400">${ICONS.search}</span>
-                            <input type="text" 
-                                placeholder="Buscar colaborador..." 
-                                value="${state.searchQuery}"
-                                oninput="filterHistoryList(this.value)"
-                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
-                            >
-                        </div>
-                    </div>
-                    <div id="historyResultsGrid" class="grid gap-4 md:grid-cols-2">
-                        ${generateHistoryCardsHTML(state.searchQuery)}
-                    </div>
-                </div>
-            `;
-        }
+                <div class="stats-pill">Total: <strong id="stat-total">—</strong></div>
+                <div class="stats-pill">Marcados: <strong id="stat-marked">—</strong></div>
+                <button id="refresh-btn" title="Recarregar dados">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M2 8a6 6 0 0111.47-2.4M14 8A6 6 0 012.53 10.4" />
+                        <path d="M14 2v4h-4M2 14v-4h4" />
+                    </svg>
+                </button>
+            </div>
+        </div>
 
-        // ============================================
-        // INICIALIZAÇÃO
-        // ============================================
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                state.user = JSON.parse(savedUser);
-                window.history.replaceState({ view: 'login' }, '', '');
-                if (hasGestaoAccess()) {
-                    loadDashboard().then(() => { state.view = 'dashboard'; pushNavigation('dashboard'); });
-                } else {
-                    loadEmployees().then(() => {
-                        loadTodayAttendance().then(() => { state.view = 'attendance'; pushNavigation('attendance'); });
-                    });
-                }
-            } else render();
-        });
-    </script>
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <div id="main">
+
+            <!-- ATTENDANCE VIEW -->
+            <div id="attendance-view" class="view">
+                <div id="attendance-content"></div>
+            </div>
+
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboard-view" class="view">
+                <div id="dash-header" class="dash-header"></div>
+                <div id="dash-filters" class="dash-filters"></div>
+                <div id="dashboard-content"></div>
+            </div>
+
+        </div>
+
+        <!-- ==================== TOAST ==================== -->
+        <div id="toast-container"></div>
+
+        <!-- ==================== LOADING OVERLAY ==================== -->
+        <div id="loading-overlay" class="hidden">
+            <div class="loader-box">
+                <div class="spinner"></div>
+                <p>Carregando...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JS Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- JS Modules (order matters — dependencies first) -->
+    <script src="js/config.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/helpers.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/attendance.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/app.js"></script>
 </body>
+
 </html>

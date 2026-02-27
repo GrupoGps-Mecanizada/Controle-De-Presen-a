@@ -1,0 +1,241 @@
+/* ===================== BASE STYLES ===================== */
+* {
+    font-family: var(--font-display);
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 14px;
+}
+
+body {
+    background: var(--bg-0);
+    color: var(--text-1);
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    overflow-x: hidden;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+button {
+    font-family: var(--font-display);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: inherit;
+}
+
+input,
+select,
+textarea {
+    font-family: var(--font-display);
+    font-size: inherit;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ===================== ANIMATIONS ===================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes shimmer {
+    to {
+        left: 100%;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* ===================== SCROLLBAR ===================== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-2);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-4);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-3);
+}
+
+/* ===================== LOADING ===================== */
+#loading-screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-0);
+    z-index: 9999;
+    transition: opacity 0.6s ease;
+}
+
+#loading-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-content {
+    max-width: 280px;
+    width: 100%;
+}
+
+.loading-bar-container {
+    background: rgba(30, 64, 175, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    height: 3px;
+}
+
+.loading-bar {
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 6px;
+    height: 100%;
+    animation: shimmer 1.5s infinite;
+    width: 60%;
+}
+
+.loading-dots::after {
+    content: '';
+    animation: loadDots 1.5s infinite;
+}
+
+@keyframes loadDots {
+    0% {
+        content: '';
+    }
+
+    25% {
+        content: '.';
+    }
+
+    50% {
+        content: '..';
+    }
+
+    75% {
+        content: '...';
+    }
+}
+
+/* ===================== SYNC BAR ===================== */
+#global-sync-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 10000;
+    transition: opacity 0.3s;
+    opacity: 0;
+}
+
+#global-sync-bar.loading {
+    opacity: 1;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    animation: shimmer 1.5s infinite;
+}
+
+#global-sync-bar.success {
+    opacity: 1;
+    background: var(--green);
+}
+
+/* ===================== BADGES ===================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* ===================== UTILITY ===================== */
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
