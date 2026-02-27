@@ -168,9 +168,9 @@ SCP.dashboard = {
             container.innerHTML = `
                 <div class="coverage-container fade-in">
                     <div class="coverage-empty">
-                        <p style="font-size:2rem;margin-bottom:12px;">🔄</p>
+                        <svg width="40" height="40" fill="none" stroke="var(--border)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16 17v-4a4 4 0 00-4-4H8m0 0l4 4m-4-4l4-4m-4 14h8V5H4v14h8z"></path></svg>
                         <p><strong>Nenhuma cobertura registrada</strong></p>
-                        <p style="font-size:0.78rem;margin-top:6px;">Quando um colaborador for coberto por outro, o histórico aparecerá aqui.</p>
+                        <p style="font-size:0.78rem;margin-top:6px;color:var(--text-3)">Quando um colaborador for coberto por outro, o histórico aparecerá aqui.</p>
                     </div>
                 </div>
             `;
@@ -211,11 +211,11 @@ SCP.dashboard = {
             return `
                                     <tr>
                                         <td style="white-space:nowrap;font-weight:600">${SCP.helpers.formatDateShort(c.date)}</td>
-                                        <td style="font-weight:600">${c.absent}</td>
-                                        <td style="color:var(--text-3)">${c.absentSup}</td>
+                                        <td style="font-weight:600;color:var(--text-1)">${c.absent}</td>
+                                        <td style="color:var(--text-3);font-size:0.78rem">${c.absentSup}</td>
                                         <td>${info ? `<span class="badge" style="background:${info.bg};color:${info.text}">${info.label}</span>` : c.status}</td>
-                                        <td style="font-weight:600;color:var(--green-text)">${c.replacement}</td>
-                                        <td style="color:var(--text-3);font-size:0.78rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.observation || '—'}</td>
+                                        <td style="font-weight:600;color:var(--text-1)">${c.replacement}</td>
+                                        <td style="color:var(--text-3);font-size:0.75rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.observation || '—'}</td>
                                     </tr>
                                 `;
         }).join('')}
@@ -281,7 +281,6 @@ SCP.dashboard = {
             // Ranking position
             const rank = allRanks.findIndex(r => r.id === emp.id) + 1;
             const rankTotal = allRanks.length;
-            const rankIcon = rank <= 3 ? '🏆' : rank <= Math.ceil(rankTotal * 0.25) ? '🥇' : '';
 
             const alerts = [];
             if (maxConsecutiveFaults >= 3) alerts.push({ text: `${maxConsecutiveFaults} faltas consecutivas`, type: 'danger' });
@@ -304,7 +303,7 @@ SCP.dashboard = {
                 <div class="history-card" style="border-left-color:${borderColor}">
                     <div class="history-card-header">
                         <div>
-                            <h4>${emp.nome} ${rankIcon}</h4>
+                            <h4>${emp.nome}</h4>
                             <p style="font-size:0.72rem;color:var(--text-3)">${emp.supervisor || '—'} · ${emp.funcao || '—'}</p>
                             ${rank > 0 ? `<p style="font-size:0.6rem;color:var(--text-3);margin-top:2px">#${rank} de ${rankTotal}</p>` : ''}
                         </div>
@@ -350,7 +349,7 @@ SCP.dashboard = {
 
                     ${alerts.length ? `
                         <div class="history-alerts">
-                            ${alerts.map(a => `<span class="history-alert ${a.type}">⚠ ${a.text}</span>`).join('')}
+                            ${alerts.map(a => `<span class="history-alert ${a.type}"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> ${a.text}</span>`).join('')}
                         </div>
                     ` : ''}
 
