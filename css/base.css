@@ -55,6 +55,18 @@ textarea {
     }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @keyframes slideInRight {
     from {
         opacity: 0;
@@ -64,6 +76,30 @@ textarea {
     to {
         opacity: 1;
         transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }
 
@@ -95,16 +131,81 @@ textarea {
     }
 }
 
+@keyframes skeletonPulse {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.95);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 .fade-in {
     animation: fadeIn 0.3s ease-out;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.4s ease-out;
 }
 
 .slide-in-right {
     animation: slideInRight 0.3s ease-out;
 }
 
+.slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+.scale-in {
+    animation: scaleIn 0.25s ease-out;
+}
+
 .animate-spin {
     animation: spin 1s linear infinite;
+}
+
+.bounce-in {
+    animation: bounceIn 0.5s ease-out;
+}
+
+/* Skeleton loading placeholder */
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
+    background-size: 200% 100%;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+    height: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.skeleton-card {
+    height: 120px;
+    border-radius: var(--radius);
 }
 
 /* ===================== SCROLLBAR ===================== */
@@ -238,4 +339,41 @@ textarea {
 
 .no-scrollbar::-webkit-scrollbar {
     display: none;
+}
+
+/* Stagger animations for children */
+.stagger-children>* {
+    animation: fadeInUp 0.3s ease-out both;
+}
+
+.stagger-children>*:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.stagger-children>*:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.stagger-children>*:nth-child(3) {
+    animation-delay: 0.1s;
+}
+
+.stagger-children>*:nth-child(4) {
+    animation-delay: 0.15s;
+}
+
+.stagger-children>*:nth-child(5) {
+    animation-delay: 0.2s;
+}
+
+.stagger-children>*:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+.stagger-children>*:nth-child(7) {
+    animation-delay: 0.3s;
+}
+
+.stagger-children>*:nth-child(8) {
+    animation-delay: 0.35s;
 }

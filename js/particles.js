@@ -29,7 +29,7 @@
             this.vx = (Math.random() - 0.5) * 0.35;
             this.vy = (Math.random() - 0.5) * 0.35;
             this.r = Math.random() * 1.2 + 0.4;
-            this.alpha = Math.random() * 0.20 + 0.12;
+            this.alpha = Math.random() * 0.30 + 0.25;
         }
         update() {
             // Mouse repulsion
@@ -58,13 +58,13 @@
                 else if (edge === 2) { this.x = Math.random() * W; this.y = H + 5; this.vx = (Math.random() - 0.5) * 0.35; this.vy = -(Math.random() * 0.3 + 0.1); }
                 else { this.x = -5; this.y = Math.random() * H; this.vx = Math.random() * 0.3 + 0.1; this.vy = (Math.random() - 0.5) * 0.35; }
                 this.r = Math.random() * 1.2 + 0.4;
-                this.alpha = Math.random() * 0.20 + 0.12;
+                this.alpha = Math.random() * 0.30 + 0.25;
             }
         }
         draw() {
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(71, 85, 105, ${this.alpha})`;
+            ctx.fillStyle = `rgba(30, 41, 59, ${this.alpha})`;
             ctx.fill();
         }
     }
@@ -79,7 +79,7 @@
                     ctx.beginPath();
                     ctx.moveTo(pts[i].x, pts[i].y);
                     ctx.lineTo(pts[j].x, pts[j].y);
-                    ctx.strokeStyle = `rgba(71, 85, 105, ${(1 - dist / 100) * 0.18})`;
+                    ctx.strokeStyle = `rgba(30, 41, 59, ${(1 - dist / 100) * 0.35})`;
                     ctx.lineWidth = 0.8;
                     ctx.stroke();
                 }

@@ -3,34 +3,136 @@
     padding: 0;
 }
 
+/* Filter / Control Bar */
+.attendance-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 56px;
+    z-index: 30;
+}
+
+.attendance-controls .filter-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.attendance-controls .filter-chip {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-2);
+    transition: all var(--transition);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.attendance-controls .filter-chip:hover {
+    background: var(--bg-3);
+    border-color: var(--border-bright);
+}
+
+.attendance-controls .filter-chip.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.attendance-controls .filter-search {
+    flex: 1;
+    min-width: 180px;
+    padding: 7px 14px 7px 36px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-2);
+    font-size: 0.8rem;
+    outline: none;
+    transition: all var(--transition);
+}
+
+.attendance-controls .filter-search:focus {
+    border-color: var(--accent-light);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+    background: var(--bg-1);
+}
+
+.attendance-controls .view-toggle {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-2);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+    border: 1px solid var(--border);
+}
+
+.attendance-controls .view-toggle button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-3);
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.attendance-controls .view-toggle button:hover {
+    color: var(--text-2);
+}
+
+.attendance-controls .view-toggle button.active {
+    background: var(--bg-1);
+    color: var(--accent);
+    box-shadow: var(--shadow);
+}
+
+.attendance-controls .view-toggle button svg {
+    width: 14px;
+    height: 14px;
+}
+
 /* Date Navigator */
 .date-navigator {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--bg-2);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
+    background: var(--bg-1);
+    border-radius: var(--radius);
+    padding: 10px 16px;
     border: 1px solid var(--border);
     margin-bottom: 16px;
+    box-shadow: var(--shadow);
 }
 
 .date-navigator button {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    background: var(--bg-1);
-    box-shadow: var(--shadow);
-    transition: all var(--transition);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    transition: all var(--transition-md);
     font-size: 14px;
     color: var(--text-2);
 }
 
 .date-navigator button:hover {
-    background: var(--bg-3);
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: scale(1.05);
 }
 
 .date-navigator .date-center {
@@ -53,6 +155,7 @@
     font-size: 0.75rem;
     color: var(--text-3);
     margin-top: 2px;
+    font-weight: 500;
 }
 
 /* Progress Bar */
@@ -87,7 +190,7 @@
 /* Employee Cards */
 .employee-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 12px;
 }
 
@@ -97,12 +200,13 @@
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
     padding: 16px;
-    transition: all var(--transition);
+    transition: all var(--transition-md);
 }
 
 .employee-card:hover {
     box-shadow: var(--shadow-md);
     border-color: var(--border-bright);
+    transform: translateY(-1px);
 }
 
 .employee-card-header {
@@ -141,7 +245,7 @@
     border: 1px solid var(--border);
     background: var(--bg-1);
     color: var(--text-2);
-    transition: all var(--transition);
+    transition: all var(--transition-md);
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
@@ -152,11 +256,157 @@
 .status-btn:hover {
     border-color: var(--border-bright);
     background: var(--bg-2);
+    transform: translateY(-1px);
 }
 
 .status-btn.active {
-    transform: scale(1.02);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transform: scale(1.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    border-width: 2px;
+    font-weight: 700;
+}
+
+/* Extras Indicator */
+.extras-indicator {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.extras-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 8px;
+    background: var(--bg-2);
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-2);
+}
+
+.observation-preview {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--text-3);
+    font-style: italic;
+    padding: 6px 10px;
+    background: var(--bg-2);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent-light);
+}
+
+/* Employee Group View */
+.employee-group {
+    margin-bottom: 20px;
+}
+
+.employee-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg-2);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: 1px solid var(--border);
+}
+
+.employee-group-header:hover {
+    background: var(--bg-3);
+}
+
+.employee-group-header h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-1);
+    flex: 1;
+}
+
+.employee-group-header .count-badge {
+    padding: 2px 10px;
+    background: var(--accent);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.employee-group-header .toggle-icon {
+    color: var(--text-3);
+    transition: transform var(--transition);
+    width: 16px;
+    height: 16px;
+}
+
+.employee-group-header.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+/* Employee Table View */
+.employee-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--bg-1);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.employee-table thead th {
+    background: var(--accent);
+    color: white;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.employee-table tbody td {
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-1);
+}
+
+.employee-table tbody tr:hover {
+    background: var(--bg-2);
+}
+
+.employee-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.employee-table .table-status-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg-1);
+    color: var(--text-2);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.employee-table .table-status-btn:hover {
+    background: var(--bg-2);
+}
+
+.employee-table .table-status-btn.active {
     border-width: 2px;
     font-weight: 700;
 }
@@ -167,7 +417,9 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-1);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-top: 1px solid var(--border);
     padding: 12px 16px;
     z-index: 50;
@@ -186,7 +438,7 @@
     color: white;
     border: none;
     cursor: pointer;
-    transition: all var(--transition);
+    transition: all var(--transition-md);
     position: relative;
     overflow: hidden;
 }
@@ -197,6 +449,8 @@
 
 .save-btn.idle:hover {
     background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .save-btn.saving {
@@ -226,6 +480,8 @@
 .save-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* Content area padding for fixed footer */
@@ -234,6 +490,24 @@
     padding-bottom: 80px;
     max-width: 1200px;
     margin: 0 auto;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .attendance-controls {
+        top: 52px;
+        padding: 8px 12px;
+    }
+
+    .attendance-controls .filter-search {
+        min-width: 100%;
+        order: -1;
+    }
+
+    #attendance-content {
+        padding: 12px;
+        padding-bottom: 80px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -247,7 +521,23 @@
     }
 
     .status-btn {
-        padding: 6px 2px;
+        padding: 7px 2px;
         font-size: 0.65rem;
+    }
+
+    .date-navigator {
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+    }
+
+    .date-navigator button {
+        width: 34px;
+        height: 34px;
+    }
+}
+
+@media (max-width: 380px) {
+    .status-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
