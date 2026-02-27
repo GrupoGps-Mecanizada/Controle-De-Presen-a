@@ -205,28 +205,8 @@
 
 .employee-card:hover {
     box-shadow: var(--shadow-md);
-    border-color: var(--border-bright);
+    border-color: var(--accent)40;
     transform: translateY(-1px);
-}
-
-.employee-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-}
-
-.employee-card-header h3 {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-1);
-    margin-bottom: 4px;
-}
-
-.employee-card-header .emp-badges {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
 }
 
 /* Status Buttons Grid */

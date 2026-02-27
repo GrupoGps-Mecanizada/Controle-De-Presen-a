@@ -20,11 +20,14 @@ SCP.attendance = {
         const marked = Object.keys(SCP.state.attendanceRecords).length;
         const progress = total > 0 ? Math.round((marked / total) * 100) : 0;
 
+        const svgCheck = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px;margin-bottom:-2px"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>';
+        const svgError = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px;margin-bottom:-2px"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>';
+
         const saveStates = {
-            idle: { text: `Salvar ${marked} Registros`, disabled: marked === 0, cls: 'idle' },
+            idle: { text: `Salvar <span id="save-count">${marked}</span> Registros`, disabled: marked === 0, cls: 'idle' },
             saving: { text: 'Salvando...', disabled: true, cls: 'saving' },
-            success: { text: '✓ Salvo com Sucesso!', disabled: true, cls: 'success' },
-            error: { text: '✕ Erro ao Salvar', disabled: true, cls: 'error' }
+            success: { text: `${svgCheck} Salvo com Sucesso!`, disabled: true, cls: 'success' },
+            error: { text: `${svgError} Erro ao Salvar`, disabled: true, cls: 'error' }
         };
         const btn = saveStates[SCP.state.saveState] || saveStates.idle;
 
@@ -46,12 +49,16 @@ SCP.attendance = {
 
         container.innerHTML = `
             <div class="date-navigator">
-                <button onclick="SCP.attendance.changeDate('${prevDay}')">◀</button>
+                <button onclick="SCP.attendance.changeDate('${prevDay}')">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
                 <div class="date-center">
                     <input type="date" value="${SCP.state.selectedDate}" onchange="SCP.attendance.changeDate(this.value)">
                     <div class="date-label">${SCP.helpers.formatDate(SCP.state.selectedDate)}</div>
                 </div>
-                <button onclick="SCP.attendance.changeDate('${nextDay}')">▶</button>
+                <button onclick="SCP.attendance.changeDate('${nextDay}')">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
             </div>
 
             <div class="progress-section">
@@ -67,7 +74,7 @@ SCP.attendance = {
             ${contentHTML}
 
             <div class="save-footer">
-                <button class="save-btn ${btn.cls}" ${btn.disabled ? 'disabled' : ''} onclick="SCP.attendance.saveAll()">${btn.text}</button>
+                <button class="save-btn ${btn.cls}" ${btn.disabled ? 'disabled' : ''} onclick="SCP.attendance.saveAll()"><div style="display:flex;align-items:center;justify-content:center">${btn.text}</div></button>
             </div>
         `;
     },
@@ -121,15 +128,14 @@ SCP.attendance = {
         }
 
         return `
-            <div class="employee-card fade-in">
-                <div class="employee-card-header">
-                    <div>
-                        <h3>${emp.nome}</h3>
-                        <div class="emp-badges">
-                            <span class="badge" style="background:var(--blue-bg);color:var(--blue-text)">${emp.funcao}</span>
-                        </div>
-                    </div>
-                    ${statusBadge}
+            <div class="employee-card fade-in" style="background:var(--bg-2);border-radius:12px;padding:11px 13px;">
+                <div class="card-top" style="display:flex;align-items:flex-start;gap:6px;margin-bottom:6px;">
+                    <div class="card-name" style="font-weight:700;font-size:13px;line-height:1.3;flex:1;color:var(--text-1);">${emp.nome}</div>
+                    ${statusBadge ? `<div style="flex-shrink:0;">${statusBadge}</div>` : ''}
+                </div>
+                <div class="card-badges" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+                    <span class="badge" style="background:var(--blue-bg);color:var(--blue-text)">${emp.funcao}</span>
+                    <span style="display:inline-flex;align-items:center;padding:2px 7px;border-radius:3px;font-family:var(--font-mono);font-size:10px;font-weight:500;color:var(--text-3);border:1px solid var(--border)">MAT: <strong style="color:var(--text-2);margin-left:3px">${emp.matricula_gps || 'S/ MAT'}</strong></span>
                 </div>
                 <div class="status-grid">${statusButtons}</div>
                 ${extrasHTML}
