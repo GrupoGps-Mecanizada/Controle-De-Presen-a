@@ -93,20 +93,30 @@ SCP.attendance = {
         let extrasHTML = '';
         if (extras) {
             const tags = [];
-            if (extras.has_justification === true) tags.push('✓ Justificativa');
-            if (extras.has_justification === false) tags.push('✕ S/ Justificativa');
-            if (extras.replacement_employee_name) tags.push('⟳ ' + extras.replacement_employee_name);
-            if (extras.training_type) tags.push('📋 ' + extras.training_type);
-            if (extras.new_schedule) tags.push('🕐 ' + extras.new_schedule);
-            if (extras.scale_change_target) tags.push('📊 Escala: ' + extras.scale_change_target);
-            if (extras.has_replacement === true) tags.push('✓ Remanejado');
-            if (extras.has_replacement === false) tags.push('⚠ S/ Remanejamento');
+
+            const iconJustify = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>';
+            const iconNoJustify = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            const iconSwap = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>';
+            const iconTrain = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>';
+            const iconClock = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+            const iconScale = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>';
+            const iconAlert = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:3px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+            const iconObs = '<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:4px;margin-bottom:-1px"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"></path></svg>';
+
+            if (extras.has_justification === true) tags.push(iconJustify + 'Justificativa');
+            if (extras.has_justification === false) tags.push(iconNoJustify + 'S/ Justificativa');
+            if (extras.replacement_employee_name) tags.push(iconSwap + extras.replacement_employee_name);
+            if (extras.training_type) tags.push(iconTrain + extras.training_type);
+            if (extras.new_schedule) tags.push(iconClock + extras.new_schedule);
+            if (extras.scale_change_target) tags.push(iconScale + 'Escala: ' + extras.scale_change_target);
+            if (extras.has_replacement === true) tags.push(iconJustify + 'Remanejado');
+            if (extras.has_replacement === false) tags.push(iconAlert + 'S/ Remanejamento');
 
             if (tags.length) {
-                extrasHTML += '<div class="extras-indicator">' + tags.map(t => `<span class="extras-tag">${t}</span>`).join('') + '</div>';
+                extrasHTML += '<div class="extras-indicator" style="display:flex;flex-wrap:wrap;gap:4px;">' + tags.map(t => `<span class="extras-tag" style="display:inline-flex;align-items:center;">${t}</span>`).join('') + '</div>';
             }
             if (extras.observations) {
-                extrasHTML += `<div class="observation-preview">📝 ${extras.observations}</div>`;
+                extrasHTML += `<div class="observation-preview" style="display:flex;align-items:center;color:var(--text-3);font-size:0.75rem;margin-top:6px;">${iconObs} ${extras.observations}</div>`;
             }
         }
 
