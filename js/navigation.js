@@ -7,8 +7,35 @@
 window.SCP = window.SCP || {};
 
 SCP.navigation = {
+    /**
+     * Aplica visibilidade de botões/views com base no perfil do login
+     * SUPERVISOR (@mecanizada.com): vê apenas Presença
+     * GESTAO (@gestaomecanizada.com): vê apenas Dashboard
+     * ADM (@sge): vê tudo
+     */
+    applyRoleVisibility() {
+        if (!SCP.auth || !SCP.auth.currentUser) return;
+        const perfil = SCP.auth.currentUser.perfil;
+
+        const btnPresenca = document.querySelector('.nav-btn[data-view="attendance"]');
+        const btnDashboard = document.querySelector('.nav-btn[data-view="dashboard"]');
+
+        // Por padrão, mostra tudo (ADM)
+        if (btnPresenca) btnPresenca.style.display = '';
+        if (btnDashboard) btnDashboard.style.display = '';
+
+        if (perfil === 'SUPERVISOR') {
+            // Supervisor: esconde Dashboard
+            if (btnDashboard) btnDashboard.style.display = 'none';
+        } else if (perfil === 'GESTAO') {
+            // Gestão: esconde Presença
+            if (btnPresenca) btnPresenca.style.display = 'none';
+        }
+        // ADM: não esconde nada
+    },
+
     switchView(view, skipHash = false) {
-        // Hide all views
+        // Hide all views first
         document.querySelectorAll('#main .view').forEach(v => v.classList.remove('active'));
 
         // Show target view
@@ -21,6 +48,9 @@ SCP.navigation = {
         });
 
         SCP.state.activeView = view;
+
+        // Apply role visibility after showing the view
+        this.applyRoleVisibility();
 
         // Push state if not restoring
         if (!skipHash) {

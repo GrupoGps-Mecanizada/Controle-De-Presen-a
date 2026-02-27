@@ -58,20 +58,42 @@ SCP.attendance = {
     },
 
     renderCard(emp) {
-        const currentStatus = SCP.state.attendanceRecords[emp.id];
+        const record = SCP.state.attendanceRecords[emp.id];
+        const currentStatus = record ? (typeof record === 'string' ? record : record.status) : null;
+        const extras = record && typeof record === 'object' ? record.extras : null;
         const statusInfo = currentStatus ? SCP.CONFIG.STATUS_CODES[currentStatus] : null;
 
         const statusBadge = statusInfo
             ? `<span class="badge" style="background:${statusInfo.bg};color:${statusInfo.text}">${statusInfo.label}</span>`
             : '';
 
-        const statusButtons = Object.entries(SCP.CONFIG.STATUS_CODES).slice(0, 9).map(([code, info]) => {
+        const statusButtons = Object.entries(SCP.CONFIG.STATUS_CODES).map(([code, info]) => {
             const isSelected = currentStatus === code;
             const style = isSelected
                 ? `background:${info.bg}; color:${info.text}; border-color:${info.color}; border-width:2px;`
                 : '';
             return `<button class="status-btn ${isSelected ? 'active' : ''}" style="${style}" onclick="SCP.attendance.setStatus('${emp.id}', '${code}')">${info.label}</button>`;
         }).join('');
+
+        let extrasHTML = '';
+        if (extras) {
+            const tags = [];
+            if (extras.has_justification === true) tags.push('✓ Justificativa');
+            if (extras.has_justification === false) tags.push('✕ S/ Justificativa');
+            if (extras.replacement_employee_name) tags.push('⟳ ' + extras.replacement_employee_name);
+            if (extras.training_type) tags.push('📋 ' + extras.training_type);
+            if (extras.new_schedule) tags.push('🕐 ' + extras.new_schedule);
+            if (extras.scale_change_target) tags.push('📊 Escala: ' + extras.scale_change_target);
+            if (extras.has_replacement === true) tags.push('✓ Remanejado');
+            if (extras.has_replacement === false) tags.push('⚠ S/ Remanejamento');
+
+            if (tags.length) {
+                extrasHTML += '<div class="extras-indicator">' + tags.map(t => `<span class="extras-tag">${t}</span>`).join('') + '</div>';
+            }
+            if (extras.observations) {
+                extrasHTML += `<div class="observation-preview">📝 ${extras.observations}</div>`;
+            }
+        }
 
         return `
             <div class="employee-card fade-in">
@@ -85,15 +107,20 @@ SCP.attendance = {
                     ${statusBadge}
                 </div>
                 <div class="status-grid">${statusButtons}</div>
+                ${extrasHTML}
             </div>
         `;
     },
 
     setStatus(empId, status) {
-        SCP.state.attendanceRecords[empId] = status;
-        this.render();
-        SCP.helpers.updateStats();
-        SCP.helpers.toast('Selecionado: ' + SCP.CONFIG.STATUS_CODES[status].label, 'info');
+        const statusConfig = SCP.CONFIG.STATUS_CODES[status];
+        if (statusConfig && statusConfig.direct) {
+            SCP.state.attendanceRecords[empId] = { status, extras: {} };
+            this.render();
+            SCP.helpers.updateStats();
+        } else {
+            SCP.statusModal.open(empId, status);
+        }
     },
 
     async saveAll() {
@@ -101,12 +128,25 @@ SCP.attendance = {
         for (const empId in SCP.state.attendanceRecords) {
             const emp = SCP.state.employees.find(e => e.id === empId);
             if (!emp) continue;
+
+            const record = SCP.state.attendanceRecords[empId];
+            const status = typeof record === 'string' ? record : record.status;
+            const extras = typeof record === 'object' ? (record.extras || {}) : {};
+
             records.push({
                 date: SCP.state.selectedDate,
                 employeeId: emp.id,
                 supervisorId: emp.supervisor_id,
-                status: SCP.state.attendanceRecords[empId],
-                observations: ''
+                status: status,
+                observations: extras.observations || '',
+                has_justification: extras.has_justification ?? null,
+                replacement_employee_id: extras.replacement_employee_id || null,
+                replacement_employee_name: extras.replacement_employee_name || null,
+                training_type: extras.training_type || null,
+                new_schedule: extras.new_schedule || null,
+                scale_change_date: extras.scale_change_date || null,
+                scale_change_target: extras.scale_change_target || null,
+                has_replacement: extras.has_replacement ?? null
             });
         }
 

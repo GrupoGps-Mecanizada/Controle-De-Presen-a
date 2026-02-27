@@ -14,30 +14,69 @@ SCP.auth = {
 
         const { data: { session } } = await supabase.auth.getSession();
 
-        supabase.auth.onAuthStateChange((_event, session) => {
+        supabase.auth.onAuthStateChange(async (_event, session) => {
             if (session) {
-                this.updateCurrentUser(session.user);
+                await this.updateCurrentUser(session.user);
             } else {
                 this.currentUser = null;
             }
         });
 
         if (session) {
-            this.updateCurrentUser(session.user);
+            await this.updateCurrentUser(session.user);
             return true;
         }
         return false;
     },
 
-    updateCurrentUser(user) {
+    async updateCurrentUser(user) {
+        const email = user.email || '';
+        let perf = user.user_metadata.perfil || 'SUPERVISOR';
+
+        // Atribuir perfil com base no domínio do e-mail
+        if (email.endsWith('@sge')) {
+            perf = 'ADM';
+        } else if (email.endsWith('@gestaomecanizada.com')) {
+            perf = 'GESTAO';
+        } else if (email.endsWith('@mecanizada.com')) {
+            perf = 'SUPERVISOR';
+        }
+
+        let supervisorId = user.user_metadata.supervisor_id || null;
+        let supervisorNome = user.user_metadata.supervisor_nome || null;
+
+        // Se for supervisor e não tiver ID, busca na tabela supervisors pelo e-mail
+        if (perf === 'SUPERVISOR' && !supervisorId && window.supabase) {
+            try {
+                console.log('SCP Auth: Buscando supervisor_id para e-mail:', email);
+                const { data, error } = await supabase.from('supervisors')
+                    .select('id, name')
+                    .eq('email', email)
+                    .single();
+                if (error) {
+                    console.warn('SCP Auth: Erro na busca do supervisor:', error.message);
+                } else if (data) {
+                    supervisorId = data.id;
+                    supervisorNome = data.name;
+                    console.log('SCP Auth: Supervisor encontrado:', supervisorNome, '| ID:', supervisorId);
+                } else {
+                    console.warn('SCP Auth: Nenhum supervisor encontrado com e-mail:', email);
+                }
+            } catch (e) {
+                console.warn('SCP Auth: Exceção ao buscar supervisor:', e);
+            }
+        }
+
+        console.log('SCP Auth: Perfil final:', perf, '| supervisor_id:', supervisorId);
+
         this.currentUser = {
             id: user.id,
             usuario: user.email.split('@')[0],
             email: user.email,
             nome: user.user_metadata.full_name || user.email.split('@')[0],
-            perfil: user.user_metadata.perfil || 'SUPERVISOR',
-            supervisor_id: user.user_metadata.supervisor_id || null,
-            supervisor_nome: user.user_metadata.supervisor_nome || null
+            perfil: perf,
+            supervisor_id: supervisorId,
+            supervisor_nome: supervisorNome
         };
         this.applyRoleUI(this.currentUser.perfil);
     },
@@ -48,7 +87,9 @@ SCP.auth = {
         try {
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
-            this.updateCurrentUser(data.user);
+            // Limpar cache antigo para forçar carregamento fresco com filtro correto
+            SCP.api.clearCache();
+            await this.updateCurrentUser(data.user);
             return { success: true, user: this.currentUser };
         } catch (e) {
             return { success: false, error: e.message || 'Erro ao fazer login' };

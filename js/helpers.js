@@ -70,10 +70,10 @@ SCP.helpers = {
     updateStats() {
         const total = SCP.state.employees.length;
         const marked = Object.keys(SCP.state.attendanceRecords).length;
-        const el = document.getElementById('stat-total');
-        if (el) el.textContent = total || '—';
-        const el2 = document.getElementById('stat-marked');
-        if (el2) el2.textContent = marked || '—';
+        const elTotal = document.getElementById('stat-total');
+        if (elTotal) elTotal.textContent = total || '—';
+        const elMarked = document.getElementById('stat-marked');
+        if (elMarked) elMarked.textContent = marked || '—';
     },
 
     showLoading(show = true) {

@@ -51,22 +51,23 @@ SCP.api = {
         console.info('SCP: Real-time subscriptions active.');
     },
 
-    /**
-     * Load employees for a specific supervisor (or all for gestão)
-     */
     async loadEmployees(silent = false) {
         if (!window.supabase) return false;
         try {
             if (!silent) this.updateSyncBar(true);
 
             let query = supabase.from('employees')
-                .select('id, name, function, regime, status, supervisor_id, supervisors(id, name)')
+                .select('id, name, function, regime, status, category, supervisor_id, supervisors(id, name)')
                 .eq('status', 'ATIVO')
+                .eq('category', 'OPERACIONAL')
                 .order('name');
 
-            // If supervisor (not gestão), filter by their supervisor_id
-            if (SCP.auth.currentUser && !SCP.helpers.hasGestaoAccess() && SCP.auth.currentUser.supervisor_id) {
-                query = query.eq('supervisor_id', SCP.auth.currentUser.supervisor_id);
+            if (SCP.auth.currentUser && !SCP.helpers.hasGestaoAccess()) {
+                if (SCP.auth.currentUser.supervisor_id) {
+                    query = query.eq('supervisor_id', SCP.auth.currentUser.supervisor_id);
+                } else {
+                    query = query.eq('supervisor_id', '00000000-0000-0000-0000-000000000000');
+                }
             }
 
             const { data, error } = await query;
@@ -94,9 +95,6 @@ SCP.api = {
         }
     },
 
-    /**
-     * Load supervisors list
-     */
     async loadSupervisors() {
         if (!window.supabase) return false;
         try {
@@ -110,16 +108,13 @@ SCP.api = {
         }
     },
 
-    /**
-     * Load attendance for a specific date (and optionally a supervisor)
-     */
     async loadAttendance(date, supervisorId = null) {
         if (!window.supabase) return false;
         try {
             this.updateSyncBar(true);
 
             let query = supabase.from('attendance_records')
-                .select('employee_id, status, observations')
+                .select('employee_id, status, observations, has_justification, replacement_employee_id, replacement_employee_name, training_type, new_schedule, scale_change_date, scale_change_target, has_replacement')
                 .eq('date', date);
 
             if (supervisorId) {
@@ -132,7 +127,20 @@ SCP.api = {
 
             SCP.state.attendanceRecords = {};
             data.forEach(rec => {
-                SCP.state.attendanceRecords[rec.employee_id] = rec.status;
+                SCP.state.attendanceRecords[rec.employee_id] = {
+                    status: rec.status,
+                    extras: {
+                        observations: rec.observations || '',
+                        has_justification: rec.has_justification,
+                        replacement_employee_id: rec.replacement_employee_id,
+                        replacement_employee_name: rec.replacement_employee_name,
+                        training_type: rec.training_type,
+                        new_schedule: rec.new_schedule,
+                        scale_change_date: rec.scale_change_date,
+                        scale_change_target: rec.scale_change_target,
+                        has_replacement: rec.has_replacement
+                    }
+                };
             });
             return true;
         } catch (e) {
@@ -142,9 +150,6 @@ SCP.api = {
         }
     },
 
-    /**
-     * Save/upsert attendance records for multiple employees
-     */
     async saveAttendance(records) {
         if (!window.supabase || !records.length) return null;
         this.updateSyncBar(true);
@@ -160,6 +165,14 @@ SCP.api = {
                 date: r.date,
                 status: r.status,
                 observations: r.observations || null,
+                has_justification: r.has_justification ?? null,
+                replacement_employee_id: r.replacement_employee_id || null,
+                replacement_employee_name: r.replacement_employee_name || null,
+                training_type: r.training_type || null,
+                new_schedule: r.new_schedule || null,
+                scale_change_date: r.scale_change_date || null,
+                scale_change_target: r.scale_change_target || null,
+                has_replacement: r.has_replacement ?? null,
                 created_by_name: userName,
                 updated_at: new Date().toISOString()
             }));
@@ -177,9 +190,6 @@ SCP.api = {
         }
     },
 
-    /**
-     * Load dashboard data: all employees + attendance for date range
-     */
     async loadDashboard(startDate, endDate) {
         if (!window.supabase) return false;
         try {
@@ -190,7 +200,7 @@ SCP.api = {
                 { data: records, error: errRec },
                 { data: supervisors, error: errSup }
             ] = await Promise.all([
-                supabase.from('employees').select('id, name, function, regime, status, supervisor_id, supervisors(name)').eq('status', 'ATIVO').order('name'),
+                supabase.from('employees').select('id, name, function, regime, status, category, supervisor_id, supervisors(name)').eq('status', 'ATIVO').eq('category', 'OPERACIONAL').order('name'),
                 supabase.from('attendance_records').select('employee_id, supervisor_id, date, status').gte('date', startDate).lte('date', endDate),
                 supabase.from('supervisors').select('id, name').eq('is_active', true).order('name')
             ]);
@@ -201,7 +211,6 @@ SCP.api = {
             if (errRec) return this._handleError(errRec, 'Dashboard Registros');
             if (errSup) return this._handleError(errSup, 'Dashboard Supervisores');
 
-            // Build date range
             const dates = [];
             const current = new Date(startDate + 'T00:00:00');
             const end = new Date(endDate + 'T00:00:00');
@@ -210,39 +219,40 @@ SCP.api = {
                 current.setDate(current.getDate() + 1);
             }
 
-            // Build records map: { employeeId: { date: status } }
+            const validEmpIds = new Set();
+            const employees = allEmployees.map(e => {
+                validEmpIds.add(e.id);
+                return {
+                    id: e.id,
+                    nome: e.name,
+                    funcao: e.function || '—',
+                    regime: e.regime || '—',
+                    supervisor: e.supervisors ? e.supervisors.name : '—',
+                    supervisor_id: e.supervisor_id
+                };
+            });
+
+            const validRecords = records.filter(r => validEmpIds.has(r.employee_id));
+
             const recordsMap = {};
-            records.forEach(r => {
+            validRecords.forEach(r => {
                 if (!recordsMap[r.employee_id]) recordsMap[r.employee_id] = {};
                 recordsMap[r.employee_id][r.date] = r.status;
             });
 
-            // Build employees list
-            const employees = allEmployees.map(e => ({
-                id: e.id,
-                nome: e.name,
-                funcao: e.function || '—',
-                regime: e.regime || '—',
-                supervisor: e.supervisors ? e.supervisors.name : '—',
-                supervisor_id: e.supervisor_id
-            }));
-
-            // Compute status totals
             const statusTotals = {};
             Object.keys(SCP.CONFIG.STATUS_CODES).forEach(k => statusTotals[k] = 0);
-            records.forEach(r => { if (statusTotals[r.status] !== undefined) statusTotals[r.status]++; });
+            validRecords.forEach(r => { if (statusTotals[r.status] !== undefined) statusTotals[r.status]++; });
 
-            // Compute daily stats
             const dailyStats = dates.map(d => {
                 const dayStats = { date: d };
                 Object.keys(SCP.CONFIG.STATUS_CODES).forEach(k => dayStats[k] = 0);
-                records.forEach(r => { if (r.date === d && dayStats[r.status] !== undefined) dayStats[r.status]++; });
+                validRecords.forEach(r => { if (r.date === d && dayStats[r.status] !== undefined) dayStats[r.status]++; });
                 return dayStats;
             });
 
-            // Top faltas
             const faltasByEmployee = {};
-            records.filter(r => r.status === 'F').forEach(r => {
+            validRecords.filter(r => r.status === 'F').forEach(r => {
                 faltasByEmployee[r.employee_id] = (faltasByEmployee[r.employee_id] || 0) + 1;
             });
             const topFaltas = Object.entries(faltasByEmployee)
