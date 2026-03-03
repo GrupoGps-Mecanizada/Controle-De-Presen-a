@@ -44,8 +44,8 @@ SCP.api = {
         };
 
         const subscription = supabase
-            .channel('public:attendance_records')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_records' }, () => debouncedReload())
+            .channel('realtime:gps_mec:efetivo_gps_mec_presencas')
+            .on('postgres_changes', { event: '*', schema: 'gps_mec', table: 'efetivo_gps_mec_presencas' }, () => debouncedReload())
             .subscribe();
         this.subscriptions.push(subscription);
         console.info('SCP: Real-time subscriptions active.');
@@ -56,8 +56,8 @@ SCP.api = {
         try {
             if (!silent) this.updateSyncBar(true);
 
-            let query = supabase.from('employees')
-                .select('id, name, function, regime, status, category, supervisor_id, supervisors(id, name)')
+            let query = supabase.schema('gps_mec').from('efetivo_gps_mec_colaboradores')
+                .select('id, name, function, regime, status, category, supervisor_id, supervisors:efetivo_gps_mec_supervisores(id, name)')
                 .eq('status', 'ATIVO')
                 .eq('category', 'OPERACIONAL')
                 .order('name');
@@ -98,7 +98,7 @@ SCP.api = {
     async loadSupervisors() {
         if (!window.supabase) return false;
         try {
-            const { data, error } = await supabase.from('supervisors').select('*').order('name');
+            const { data, error } = await supabase.schema('gps_mec').from('efetivo_gps_mec_supervisores').select('*').order('name');
             if (error) return this._handleError(error, 'Carregar Supervisores');
             SCP.state.supervisors = data.map(s => ({ id: s.id, nome: s.name, ativo: s.is_active !== false }));
             return true;
@@ -113,7 +113,7 @@ SCP.api = {
         try {
             this.updateSyncBar(true);
 
-            let query = supabase.from('attendance_records')
+            let query = supabase.schema('gps_mec').from('efetivo_gps_mec_presencas')
                 .select('employee_id, status, observations, has_justification, replacement_employee_id, replacement_employee_name, training_type, new_schedule, scale_change_date, scale_change_target, has_replacement')
                 .eq('date', date);
 
@@ -178,7 +178,8 @@ SCP.api = {
             }));
 
             const { error } = await supabase
-                .from('attendance_records')
+                .schema('gps_mec')
+                .from('efetivo_gps_mec_presencas')
                 .upsert(rows, { onConflict: 'employee_id,date' });
 
             if (error) throw error;
@@ -200,9 +201,9 @@ SCP.api = {
                 { data: records, error: errRec },
                 { data: supervisors, error: errSup }
             ] = await Promise.all([
-                supabase.from('employees').select('id, name, function, regime, status, category, supervisor_id, supervisors(name)').eq('status', 'ATIVO').eq('category', 'OPERACIONAL').order('name'),
-                supabase.from('attendance_records').select('employee_id, supervisor_id, date, status').gte('date', startDate).lte('date', endDate),
-                supabase.from('supervisors').select('id, name').eq('is_active', true).order('name')
+                supabase.schema('gps_mec').from('efetivo_gps_mec_colaboradores').select('id, name, function, regime, status, category, supervisor_id, supervisors:efetivo_gps_mec_supervisores(name)').eq('status', 'ATIVO').eq('category', 'OPERACIONAL').order('name'),
+                supabase.schema('gps_mec').from('efetivo_gps_mec_presencas').select('employee_id, supervisor_id, date, status').gte('date', startDate).lte('date', endDate),
+                supabase.schema('gps_mec').from('efetivo_gps_mec_supervisores').select('id, name').eq('is_active', true).order('name')
             ]);
 
             this.updateSyncBar(false);

@@ -49,7 +49,7 @@ SCP.auth = {
         if (perf === 'SUPERVISOR' && !supervisorId && window.supabase) {
             try {
                 console.log('SCP Auth: Buscando supervisor_id para e-mail:', email);
-                const { data, error } = await supabase.from('supervisors')
+                const { data, error } = await supabase.schema('gps_mec').from('efetivo_gps_mec_supervisores')
                     .select('id, name')
                     .eq('email', email)
                     .single();

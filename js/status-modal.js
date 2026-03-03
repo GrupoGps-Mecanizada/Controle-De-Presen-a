@@ -71,7 +71,7 @@ SCP.statusModal = {
     async _loadAllOperational() {
         if (!window.supabase) return;
         try {
-            const { data } = await supabase.from('employees')
+            const { data } = await supabase.schema('gps_mec').from('efetivo_gps_mec_colaboradores')
                 .select('id, name, function, regime, supervisor_id, supervisors(name)')
                 .eq('status', 'ATIVO')
                 .eq('category', 'OPERACIONAL')
