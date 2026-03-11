@@ -175,6 +175,19 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+    <!-- DEV MODE: bypass SSO automático em ambiente local (file:// / localhost).
+         SSO não consegue redirecionar de volta para file://, portanto o bypass
+         é ativado automaticamente. Em produção (https) esta lógica é ignorada. -->
+    <script>
+      (function () {
+        var isLocal = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        if (isLocal) {
+          window.SGE_SSO_BYPASS = true;
+          console.log('[SGE DEV] Bypass SSO ativado automaticamente — protocolo local detectado (' + location.protocol + ')');
+        }
+      })();
+    </script>
+
     <!-- SSO / Central SGE -->
     <script src="https://grupogps-mecanizada.github.io/SGE_GRUPOGPS/js/auth/sso_client.js?v=6"></script>
     <script src="https://grupogps-mecanizada.github.io/SGE-CENTRAL/js/sge-session-ping.js?v=1"></script>

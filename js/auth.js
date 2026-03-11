@@ -12,8 +12,9 @@
 window.SCP = window.SCP || {};
 
 // ========== SSO MODE ==========
-// BYPASS ativo para rollout gradual — login local continua funcionando
-window.SGE_SSO_BYPASS = true;
+// SSO ATIVO — em produção (GitHub Pages) o login é obrigatório pelo Central SGE.
+// Em ambiente local (localhost / file://) o bypass é ativado automaticamente pelo index.html.
+// window.SGE_SSO_BYPASS = true; // ← descomente SOMENTE para rollback emergencial
 
 // Instancia o SDK passando o slug do sistema
 const ssoClient = new window.SgeAuthSDK('controle_presenca_mec');
